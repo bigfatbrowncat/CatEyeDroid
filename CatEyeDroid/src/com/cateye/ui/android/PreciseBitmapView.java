@@ -5,6 +5,7 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.PointF;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 
@@ -13,27 +14,101 @@ import com.cateye.core.jni.PreciseBitmap;
 public class PreciseBitmapView extends View
 {
 	PreciseBitmap pb;
-	PointF fingerStartPosition;
-	float deltaX, deltaY;
-	float panX, panY;
 
-	public void setPreciseBitmap(PreciseBitmap value) { pb = value; }
+	private void startUpdater()
+	{
+		if (updatingThread == null || !updatingThread.isAlive())
+		{
+			updatingThread = new Thread(new Runnable() {
+				
+				public void run() 
+				{
+					while (PreciseBitmapView.this.isShown())
+					{
+						//if (bitmapWidth != getWidth())
+						{
+				        	bitmapWidth = getWidth();
+						}
+						//if (bitmapHeight != getHeight())
+						{
+							bitmapHeight = getHeight();
+						}
+	
+						if (pb != null && bitmapWidth > 0 && bitmapHeight > 0)
+						{
+							float deltaXOld = deltaX;
+							float deltaYOld = deltaY;
+							panX -= deltaXOld;
+							panY -= deltaYOld;
+							
+							Bitmap newImage = Bitmap.createBitmap(bitmapWidth, bitmapHeight, Bitmap.Config.ARGB_8888);
+							pixels = pb.getPixels(pixels, (int)(panX), (int)(panY), bitmapWidth, bitmapHeight, 500);
+							newImage.setPixels(pixels, 0, bitmapWidth, 0, 0, bitmapWidth, bitmapHeight);
+	
+					       	synchronized (this) 
+					       	{
+						       	image = newImage;
+								deltaX -= deltaXOld;
+								deltaY -= deltaYOld;
+								fingerStartPosition = new PointF(currentFingerPosition.x - deltaX,
+								                                 currentFingerPosition.y - deltaY);
+							}
+					       	PreciseBitmapView.this.postInvalidate();
+						}
+					}
+				}
+			});
+			
+			updatingThread.start();
+		}
+		
+	}
+	public void setPreciseBitmap(PreciseBitmap value) 
+	{
+		pb = value; 
+	}
 	
     public PreciseBitmapView(Context context)
     {
     	super(context);
+    	startUpdater();
     }
 
     public PreciseBitmapView(Context context, AttributeSet attrs) 
     {
         super(context, attrs);
+        startUpdater();
     }
     
-    private Bitmap image = null;
-    private int[] pixels;
-    private int bitmapWidth = 0, bitmapHeight = 0;
-    private int eventNumber = 0;
-
+    @Override
+    protected void onVisibilityChanged(View changedView, int visibility) 
+    {
+    	super.onVisibilityChanged(changedView, visibility);
+    	if (visibility == View.VISIBLE)
+    	{
+    		startUpdater();
+    	}
+    	else
+    	{
+    		try {
+        		Log.i("PreciseBitmapView", "Joining updater...");
+				updatingThread.join();
+	    		Log.i("PreciseBitmapView", "Joined.");
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+    	}
+    }
+    
+    private volatile float deltaX, deltaY;
+    private volatile float panX, panY;
+    private volatile PointF fingerStartPosition = new PointF(0,0), currentFingerPosition = new PointF(0,0);
+    private volatile Bitmap image = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888);
+    private volatile int[] pixels;
+    private volatile int bitmapWidth = 1, bitmapHeight = 1;
+    private Thread updatingThread = null;
+    
 	@Override
 	protected void onDraw(Canvas canvas) 
 	{
@@ -44,42 +119,11 @@ public class PreciseBitmapView extends View
 		canvas.drawLine(0, 0, getWidth(), getHeight(), pnt);
 		canvas.drawBitmap(image, 0, 0, null);*/
 		
-		if (bitmapWidth != getWidth())
-		{
-        	bitmapWidth = getWidth();
-        	image = null;
-        	pixels = null;
-		}
-		if (bitmapHeight != getHeight())
-		{
-			bitmapHeight = getHeight();
-			image = null;
-        	pixels = null;
-		}
-		
-		if (image == null)
-		{
-			updateBitmap();
-		}
-		canvas.drawBitmap(image, deltaX, deltaY, null);
-	}
 
-	protected void updateBitmap()
-	{
-		image = Bitmap.createBitmap(bitmapWidth, bitmapHeight, Bitmap.Config.ARGB_8888);
-        pixels = pb.getPixels(pixels, (int)(panX), (int)(panY), bitmapWidth, bitmapHeight, 500);
-        image.setPixels(pixels, 0, bitmapWidth, 0, 0, bitmapWidth, bitmapHeight);		
-	}
-	
-	protected void applyDelta()
-	{
-		panX -= deltaX;
-		panY -= deltaY;
-		
-		deltaX = 0;
-		deltaY = 0;
-		
-		image = null;
+        synchronized (this)
+        {
+        	canvas.drawBitmap(image, deltaX, deltaY, null);
+        }
 	}
 	
 	@Override
@@ -87,28 +131,27 @@ public class PreciseBitmapView extends View
 	{
 		if (event.getActionMasked() == MotionEvent.ACTION_DOWN)
 		{
-		//	Log.i("PreciseBitmapView", "ACTION_DOWN " + event.getX() + ", " + event.getY());
-			fingerStartPosition = new PointF(event.getX(), event.getY());
+	        synchronized (this)
+	        {
+	        	fingerStartPosition = new PointF(event.getX(), event.getY());
+	        	currentFingerPosition = fingerStartPosition;
+	        }
 			return true;
 		}
 		else if (event.getActionMasked() == MotionEvent.ACTION_MOVE)
 		{
-			PointF currentFingerPosition = new PointF(event.getX(), event.getY());
-			deltaX = currentFingerPosition.x - fingerStartPosition.x;
-			deltaY = currentFingerPosition.y - fingerStartPosition.y;
-			eventNumber ++;
-			if (eventNumber % 20 == 0)
-			{
-				applyDelta();
-				fingerStartPosition = new PointF(event.getX(), event.getY());
-			}
+	        synchronized (this)
+	        {
+				currentFingerPosition = new PointF(event.getX(), event.getY());
+				deltaX = currentFingerPosition.x - fingerStartPosition.x;
+				deltaY = currentFingerPosition.y - fingerStartPosition.y;
+	        }
 			
 			invalidate();
 			return true;
 		}
 		else if (event.getActionMasked() == MotionEvent.ACTION_UP)
 		{
-			applyDelta();
 			invalidate();
 			return true;
 		}
