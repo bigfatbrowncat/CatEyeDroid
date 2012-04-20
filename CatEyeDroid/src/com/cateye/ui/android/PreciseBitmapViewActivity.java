@@ -1,7 +1,13 @@
 package com.cateye.ui.android;
 
 import android.app.Activity;
+import android.app.Application;
+import android.app.ProgressDialog;
+import android.content.Context;
 import android.os.Bundle;
+import android.view.MotionEvent;
+import android.view.View;
+import android.view.View.OnTouchListener;
 
 public class PreciseBitmapViewActivity extends Activity {
     
@@ -14,6 +20,9 @@ private PreciseBitmapView rawView;
         setContentView(R.layout.raw_viewer_activity);
         rawView = (PreciseBitmapView)findViewById(R.id.surfaceView1);
         
-        rawView.setPreciseBitmap(((CatEyeApplication) getApplication()).getPreciseBitmap());
+        CatEyeApplication app = ((CatEyeApplication) getApplication());
+        rawView.setPreciseBitmap(app.getPreciseBitmap());
+        
+        //rawView.setOnTouchListener((View.OnTouchListener)this);
     }
 }

@@ -192,15 +192,25 @@ extern "C" JNIEXPORT jintArray JNICALL Java_com_cateye_core_jni_PreciseBitmap_ge
     for (int j = 0; j < screenHeight; j++)
    	for (int i = 0; i < screenWidth; i++)
    	{
-   		int r = pbmp.r[j * pbmp.width + i] * brightness,
-   		    g = pbmp.g[j * pbmp.width + i] * brightness,
-   		    b = pbmp.b[j * pbmp.width + i] * brightness;
+   		int srcx = i + x;
+   		int srcy = j + y;
 
-   		if (r > 255) r = 255;
-   		if (g > 255) g = 255;
-   		if (b > 255) b = 255;
+   		if (srcx < 0 || srcy < 0 || srcx >= pbmp.width || srcy >= pbmp.height)
+   		{
+   			pixels[j * screenWidth + i] = 0;
+   		}
+   		else
+   		{
+			int r = pbmp.r[srcy * pbmp.width + srcx] * brightness,
+				g = pbmp.g[srcy * pbmp.width + srcx] * brightness,
+				b = pbmp.b[srcy * pbmp.width + srcx] * brightness;
 
-    	pixels[j * screenWidth + i] = (0xff << 24) + (r << 16) + (g << 8) + b;
+			if (r > 255) r = 255;
+			if (g > 255) g = 255;
+			if (b > 255) b = 255;
+
+			pixels[j * screenWidth + i] = (0xff << 24) + (r << 16) + (g << 8) + b;
+   		}
    	}
 	DEBUG_INFO
     return res;
