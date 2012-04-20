@@ -13,5 +13,7 @@ private PreciseBitmapView rawView;
         super.onCreate(savedInstanceState);
         setContentView(R.layout.raw_viewer_activity);
         rawView = (PreciseBitmapView)findViewById(R.id.surfaceView1);
+        
+        rawView.setPreciseBitmap(((CatEyeApplication) getApplication()).getPreciseBitmap());
     }
 }

@@ -154,7 +154,7 @@ extern "C" JNIEXPORT jobject JNICALL Java_com_cateye_core_jni_PreciseBitmap_clon
 }
 
 extern "C" JNIEXPORT jintArray JNICALL Java_com_cateye_core_jni_PreciseBitmap_getPixels
-	(JNIEnv * env, jobject obj, jint x, jint y, jint screenWidth, jint screenHeight)
+	(JNIEnv * env, jobject obj, jint x, jint y, jint screenWidth, jint screenHeight, jfloat brightness)
 {
 	// Getting the class
 	jclass cls = env->GetObjectClass(obj);
@@ -192,9 +192,14 @@ extern "C" JNIEXPORT jintArray JNICALL Java_com_cateye_core_jni_PreciseBitmap_ge
     for (int j = 0; j < screenHeight; j++)
    	for (int i = 0; i < screenWidth; i++)
    	{
-   		int r = (char)(pbmp.r[j * pbmp.width + i] * 255),
-   		    g = (char)(pbmp.g[j * pbmp.width + i] * 255),
-   		    b = (char)(pbmp.b[j * pbmp.width + i] * 255);
+   		int r = pbmp.r[j * pbmp.width + i] * brightness,
+   		    g = pbmp.g[j * pbmp.width + i] * brightness,
+   		    b = pbmp.b[j * pbmp.width + i] * brightness;
+
+   		if (r > 255) r = 255;
+   		if (g > 255) g = 255;
+   		if (b > 255) b = 255;
+
     	pixels[j * screenWidth + i] = (0xff << 24) + (r << 16) + (g << 8) + b;
    	}
 	DEBUG_INFO
