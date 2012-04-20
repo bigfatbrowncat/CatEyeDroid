@@ -49,7 +49,7 @@ public class PreciseBitmap implements IPreciseBitmap
 	
 	public native void alloc(int width, int height) throws NativeHeapAllocationException;
 	
-	public native int[] getPixels(int x, int y, int screenWidth, int screenHeight, float brightness);
+	public native int[] getPixels(int[] buf, int x, int y, int screenWidth, int screenHeight, float brightness);
 	
 	public native void free() throws InvalidDataException;
 	

@@ -3,8 +3,8 @@
 #include <bitmaps.h>
 #include <android/log.h>
 
-//#define DEBUG_INFO	//printf("%d\n", __LINE__);fflush(stdout);
-#define DEBUG_INFO __android_log_print(ANDROID_LOG_INFO, "CorePreciseBitmap", "At line %d", __LINE__);
+#define DEBUG_INFO	//printf("%d\n", __LINE__);fflush(stdout);
+//#define DEBUG_INFO __android_log_print(ANDROID_LOG_INFO, "CorePreciseBitmap", "At line %d", __LINE__);
 
 #define NULL					0
 #define NATIVE_OUT_OF_MEMORY	"Out of memory during native image allocation"
@@ -154,7 +154,7 @@ extern "C" JNIEXPORT jobject JNICALL Java_com_cateye_core_jni_PreciseBitmap_clon
 }
 
 extern "C" JNIEXPORT jintArray JNICALL Java_com_cateye_core_jni_PreciseBitmap_getPixels
-	(JNIEnv * env, jobject obj, jint x, jint y, jint screenWidth, jint screenHeight, jfloat brightness)
+	(JNIEnv * env, jobject obj, jintArray buf, jint x, jint y, jint screenWidth, jint screenHeight, jfloat brightness)
 {
 	// Getting the class
 	jclass cls = env->GetObjectClass(obj);
@@ -183,9 +183,12 @@ extern "C" JNIEXPORT jintArray JNICALL Java_com_cateye_core_jni_PreciseBitmap_ge
 
 	DEBUG_INFO
 
-	__android_log_print(ANDROID_LOG_INFO, "CorePreciseBitmap", "Allocating %dx%d pixels (%d bytes)", screenWidth, screenHeight, screenWidth * screenHeight * sizeof(jint));
-	jintArray res = env->NewIntArray(screenWidth * screenHeight);
-	jint* pixels = env->GetIntArrayElements(res, 0);
+	if (buf == NULL)
+	{
+		__android_log_print(ANDROID_LOG_INFO, "CorePreciseBitmap", "Allocating %dx%d pixels (%d bytes)", screenWidth, screenHeight, screenWidth * screenHeight * sizeof(jint));
+		buf = env->NewIntArray(screenWidth * screenHeight);
+	}
+	jint* pixels = env->GetIntArrayElements(buf, 0);
 
 	DEBUG_INFO
 
@@ -213,5 +216,5 @@ extern "C" JNIEXPORT jintArray JNICALL Java_com_cateye_core_jni_PreciseBitmap_ge
    		}
    	}
 	DEBUG_INFO
-    return res;
+    return buf;
 }
