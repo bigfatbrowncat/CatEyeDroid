@@ -5,7 +5,7 @@ import com.cateye.core.InvalidDataException;
 import com.cateye.core.NativeHeapAllocationException;
 import com.cateye.core.jni.LibraryLoader;
 
-class PreciseBitmap implements IPreciseBitmap
+public class PreciseBitmap implements IPreciseBitmap
 {
 	/**
 	 * Width of bitmap. 
@@ -48,7 +48,9 @@ class PreciseBitmap implements IPreciseBitmap
 	}
 	
 	public native void alloc(int width, int height) throws NativeHeapAllocationException;
-
+	
+	public native int[] getPixels(int x, int y, int screenWidth, int screenHeight);
+	
 	public native void free() throws InvalidDataException;
 	
 	@Override
@@ -62,6 +64,6 @@ class PreciseBitmap implements IPreciseBitmap
 	
 	static
 	{
-		LibraryLoader.attach("CatEyeB.Core.Native");
+		System.loadLibrary("Core");
 	}
 }

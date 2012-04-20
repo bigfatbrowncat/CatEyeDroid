@@ -135,7 +135,7 @@ class RawImageDescription extends ImageDescription
 	
 	static
 	{
-		LibraryLoader.attach("Raw.CatEyeImageLoader");		
+		System.loadLibrary("RawImageLoader");
 	}
 
 }

@@ -3,6 +3,10 @@
 #include <string.h>
 #include <new>
 
+#ifndef NULL
+#define NULL		0
+#endif
+
 int PreciseBitmap_Init(PreciseBitmap& bmp, int width, int height)
 {
 	try

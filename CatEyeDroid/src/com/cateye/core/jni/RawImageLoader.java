@@ -13,7 +13,7 @@ import com.cateye.core.IncorrectImageLoaderRelation;
 import com.cateye.core.jni.LibraryLoader;
 import com.cateye.core.jni.PreciseBitmap;
 
-class RawImageLoader implements IImageLoader
+public class RawImageLoader implements IImageLoader
 {
 	// Progress listeners
 	private final List<IProgressListener> progressListeners = new ArrayList<IProgressListener>();
@@ -115,7 +115,7 @@ class RawImageLoader implements IImageLoader
 	
 	static
 	{
-		LibraryLoader.attach("Raw.CatEyeImageLoader");
+		System.loadLibrary("RawImageLoader");
 	}
 	
 }

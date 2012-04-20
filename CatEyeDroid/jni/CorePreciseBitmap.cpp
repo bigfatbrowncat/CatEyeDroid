@@ -1,12 +1,16 @@
 //#include <com/cateye/core/jni/PreciseBitmap.h>
 #include <jni.h>
 #include <bitmaps.h>
+#include <android/log.h>
+
+//#define DEBUG_INFO	//printf("%d\n", __LINE__);fflush(stdout);
+#define DEBUG_INFO __android_log_print(ANDROID_LOG_INFO, "CorePreciseBitmap", "At line %d", __LINE__);
 
 #define NULL					0
 #define NATIVE_OUT_OF_MEMORY	"Out of memory during native image allocation"
 #define INVALID_IMAGE_DATA		"Invalid image data"
 
-JNIEXPORT void JNICALL Java_com_cateye_core_jni_PreciseBitmap_alloc
+extern "C" JNIEXPORT void JNICALL Java_com_cateye_core_jni_PreciseBitmap_alloc
 	(JNIEnv * env, jobject obj, jint width, jint height)
 {
 	// Getting the class
@@ -47,7 +51,7 @@ JNIEXPORT void JNICALL Java_com_cateye_core_jni_PreciseBitmap_alloc
 
 }
 
-JNIEXPORT void JNICALL Java_com_cateye_core_jni_PreciseBitmap_free
+extern "C" JNIEXPORT void JNICALL Java_com_cateye_core_jni_PreciseBitmap_free
 	(JNIEnv * env, jobject obj)
 {
 	// Getting the class
@@ -93,7 +97,7 @@ JNIEXPORT void JNICALL Java_com_cateye_core_jni_PreciseBitmap_free
 
 }
 
-JNIEXPORT jobject JNICALL Java_com_cateye_core_jni_PreciseBitmap_clone
+extern "C" JNIEXPORT jobject JNICALL Java_com_cateye_core_jni_PreciseBitmap_clone
 	(JNIEnv * env, jobject obj)
 {
 	// Getting the class
@@ -147,4 +151,52 @@ JNIEXPORT jobject JNICALL Java_com_cateye_core_jni_PreciseBitmap_clone
 
 		return ret_obj;
 	}
+}
+
+extern "C" JNIEXPORT jintArray JNICALL Java_com_cateye_core_jni_PreciseBitmap_getPixels
+	(JNIEnv * env, jobject obj, jint x, jint y, jint screenWidth, jint screenHeight)
+{
+	// Getting the class
+	jclass cls = env->GetObjectClass(obj);
+	DEBUG_INFO
+	jclass exception_cls;
+
+	DEBUG_INFO
+
+	// Getting field ids
+	jfieldID r_id, g_id, b_id, width_id, height_id;
+	r_id = env->GetFieldID(cls, "r", "J");
+	g_id = env->GetFieldID(cls, "g", "J");
+	b_id = env->GetFieldID(cls, "b", "J");
+	width_id = env->GetFieldID(cls, "width", "I");
+	height_id = env->GetFieldID(cls, "height", "I");
+
+	DEBUG_INFO
+
+	// Getting the bitmap from JVM
+	PreciseBitmap pbmp;
+	pbmp.r = (float*)env->GetLongField(obj, r_id);
+	pbmp.g = (float*)env->GetLongField(obj, g_id);
+	pbmp.b = (float*)env->GetLongField(obj, b_id);
+	pbmp.width = env->GetIntField(obj, width_id);
+	pbmp.height = env->GetIntField(obj, height_id);
+
+	DEBUG_INFO
+
+	__android_log_print(ANDROID_LOG_INFO, "CorePreciseBitmap", "Allocating %dx%d pixels (%d bytes)", screenWidth, screenHeight, screenWidth * screenHeight * sizeof(jint));
+	jintArray res = env->NewIntArray(screenWidth * screenHeight);
+	jint* pixels = env->GetIntArrayElements(res, 0);
+
+	DEBUG_INFO
+
+    for (int j = 0; j < screenHeight; j++)
+   	for (int i = 0; i < screenWidth; i++)
+   	{
+   		int r = (char)(pbmp.r[j * pbmp.width + i] * 255),
+   		    g = (char)(pbmp.g[j * pbmp.width + i] * 255),
+   		    b = (char)(pbmp.b[j * pbmp.width + i] * 255);
+    	pixels[j * screenWidth + i] = (0xff << 24) + (r << 16) + (g << 8) + b;
+   	}
+	DEBUG_INFO
+    return res;
 }

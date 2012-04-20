@@ -54,7 +54,7 @@ include $(BUILD_STATIC_LIBRARY)
 include $(CLEAR_VARS)
 
 LOCAL_MODULE    := libraw
-LOCAL_CFLAGS    := -DLIBRAW_LIBRARY_BUILD -DNEEDS_SWAB -fexceptions
+LOCAL_CFLAGS    := -DLIBRAW_LIBRARY_BUILD -DNEEDS_SWAB -fexceptions -ffast-math -O3 -funroll-loops
 LOCAL_SRC_FILES := dcraw_common.cpp \
                    dcraw_fileio.cpp \
                    demosaic_packs.cpp \
@@ -69,7 +69,8 @@ include $(BUILD_STATIC_LIBRARY)
 include $(CLEAR_VARS)
 
 LOCAL_MODULE    := libCore
-LOCAL_CFLAGS    := -fexceptions
+LOCAL_LDLIBS    := -llog
+LOCAL_CFLAGS    := -fexceptions -ffast-math -O3 -funroll-loops
 LOCAL_SRC_FILES := CorePreciseBitmap.cpp \
                    CorePreviewBitmap.cpp
 
@@ -82,6 +83,8 @@ include $(BUILD_SHARED_LIBRARY)
 include $(CLEAR_VARS)
 
 LOCAL_MODULE    := libRawImageLoader
+LOCAL_LDLIBS    := -llog
+LOCAL_CFLAGS    := -fexceptions -ffast-math -O3 -funroll-loops
 LOCAL_SRC_FILES := RawImageLoader.cpp
 
 LOCAL_STATIC_LIBRARIES := libraw libbitmaps libjpeg8c
