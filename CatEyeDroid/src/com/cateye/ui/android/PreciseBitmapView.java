@@ -43,8 +43,11 @@ public class PreciseBitmapView extends View
 							
 							Bitmap newImage = Bitmap.createBitmap(bitmapWidth, bitmapHeight, Bitmap.Config.ARGB_8888);
 							pixels = pb.getPixels(pixels, (int)(panX), (int)(panY), bitmapWidth, bitmapHeight, 500);
-							newImage.setPixels(pixels, 0, bitmapWidth, 0, 0, bitmapWidth, bitmapHeight);
-	
+							if (newImage != null && !newImage.isRecycled())
+							{
+								newImage.setPixels(pixels, 0, bitmapWidth, 0, 0, bitmapWidth, bitmapHeight);
+							}
+							
 					       	synchronized (this) 
 					       	{
 						       	image = newImage;
@@ -56,6 +59,7 @@ public class PreciseBitmapView extends View
 					       	PreciseBitmapView.this.postInvalidate();
 						}
 					}
+					Log.i("PreciseBitmapView", "Updating thread stopped");
 				}
 			});
 			
@@ -68,12 +72,12 @@ public class PreciseBitmapView extends View
 		pb = value; 
 	}
 	
-    public PreciseBitmapView(Context context)
-    {
-    	super(context);
-    	startUpdater();
-    }
-
+	@Override
+	protected void onDetachedFromWindow() {
+		// TODO Auto-generated method stub
+		super.onDetachedFromWindow();
+	}
+	
     public PreciseBitmapView(Context context, AttributeSet attrs) 
     {
         super(context, attrs);
