@@ -4,7 +4,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#      http://www.apache.org/licenses/LICENSE-2.0
+#      http://www.apache.crg/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -12,11 +12,28 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+
+# the purpose of this sample is to demonstrate how one can
+# generate two distinct shared libraries and have them both
+# uploaded in
+#
+
+LOCAL_PATH_BACKUP := $(LOCAL_PATH)
 LOCAL_PATH := $(call my-dir)
 
+# Core
+#
 include $(CLEAR_VARS)
 
-LOCAL_MODULE    := peee
-LOCAL_SRC_FILES := peee.c
+LOCAL_MODULE    := libCore
+LOCAL_LDLIBS    := -llog
+LOCAL_CFLAGS    := -fexceptions -ffast-math -O3 -funroll-loops
+LOCAL_C_INCLUDES:= $(LOCAL_PATH)/../
+LOCAL_SRC_FILES := CorePreciseBitmap.cpp \
+                   CorePreviewBitmap.cpp
+
+LOCAL_STATIC_LIBRARIES := libbitmaps
 
 include $(BUILD_SHARED_LIBRARY)
+
+LOCAL_PATH := $(LOCAL_PATH_BACKUP)

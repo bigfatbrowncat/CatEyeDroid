@@ -18,13 +18,21 @@
 # uploaded in
 #
 
-LOCAL_PATH:= $(call my-dir)
+LOCAL_PATH_BACKUP := $(LOCAL_PATH)
+LOCAL_PATH := $(call my-dir)
 
-include $(LOCAL_PATH)/raw/Android.mk
-include $(LOCAL_PATH)/jpeg8c/Android.mk
+# RawImageLoader
+#
+include $(CLEAR_VARS)
 
-include $(LOCAL_PATH)/bitmaps/Android.mk
+LOCAL_MODULE    := libRawImageLoader
+LOCAL_LDLIBS    := -llog
+LOCAL_CFLAGS    := -fexceptions -ffast-math -O3 -funroll-loops
+LOCAL_C_INCLUDES:= $(LOCAL_PATH)/../
+LOCAL_SRC_FILES := RawImageLoader.cpp
 
-include $(LOCAL_PATH)/Core/Android.mk
-include $(LOCAL_PATH)/RawImageLoader/Android.mk
+LOCAL_STATIC_LIBRARIES := libraw libbitmaps libjpeg8c
 
+include $(BUILD_SHARED_LIBRARY)
+
+LOCAL_PATH := $(LOCAL_PATH_BACKUP)

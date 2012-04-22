@@ -1,7 +1,10 @@
-#include "bitmaps.h"
-
+#include <bitmaps.h>
 #include <string.h>
 #include <new>
+
+#ifndef NULL
+#define NULL		0
+#endif
 
 int PreviewBitmap_Init(PreviewBitmap& bmp, int width, int height)
 {
@@ -13,8 +16,6 @@ int PreviewBitmap_Init(PreviewBitmap& bmp, int width, int height)
 		bmp.r = new Int8[width * height];
 		bmp.g = new Int8[width * height];
 		bmp.b = new Int8[width * height];
-
-		return BITMAP_RESULT_OK;
 	}
     catch (...) //catch (std:: bad_alloc) doesn't work here for some reason!!!
 	{
@@ -24,6 +25,7 @@ int PreviewBitmap_Init(PreviewBitmap& bmp, int width, int height)
 
 		return BITMAP_RESULT_OUT_OF_MEMORY;
 	}
+	return BITMAP_RESULT_OK;
 }
 
 int PreviewBitmap_Copy(PreviewBitmap& src, PreviewBitmap& res)

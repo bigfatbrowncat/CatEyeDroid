@@ -1,5 +1,4 @@
-#include "bitmaps.h"
-
+#include <bitmaps.h>
 #include <string.h>
 #include <new>
 
@@ -20,7 +19,6 @@ int PreciseBitmap_Init(PreciseBitmap& bmp, int width, int height)
 		bmp.g = new float[width * height];
 		bmp.b = new float[width * height];
 
-		return BITMAP_RESULT_OK;
 	}
     catch (...) //catch (std:: bad_alloc) doesn't work here for some reason!!!
 	{
@@ -30,7 +28,7 @@ int PreciseBitmap_Init(PreciseBitmap& bmp, int width, int height)
 
 		return BITMAP_RESULT_OUT_OF_MEMORY;
 	}
-
+	return BITMAP_RESULT_OK;
 }
 
 int PreciseBitmap_Copy(PreciseBitmap& src, PreciseBitmap& res)

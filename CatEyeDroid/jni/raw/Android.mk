@@ -18,13 +18,23 @@
 # uploaded in
 #
 
-LOCAL_PATH:= $(call my-dir)
+LOCAL_PATH_BACKUP := $(LOCAL_PATH)
+LOCAL_PATH := $(call my-dir)
 
-include $(LOCAL_PATH)/raw/Android.mk
-include $(LOCAL_PATH)/jpeg8c/Android.mk
+# libraw
+#
+include $(CLEAR_VARS)
 
-include $(LOCAL_PATH)/bitmaps/Android.mk
+LOCAL_MODULE    := libraw
+LOCAL_CFLAGS    := -DLIBRAW_LIBRARY_BUILD -DNEEDS_SWAB -fexceptions -ffast-math -O3 -funroll-loops
+LOCAL_C_INCLUDES:= $(LOCAL_PATH)/../
+LOCAL_SRC_FILES := dcraw_common.cpp \
+                   dcraw_fileio.cpp \
+                   demosaic_packs.cpp \
+                   libraw_cxx.cpp \
+                   libraw_datastream.cpp \
+                   libraw_c_api.cpp
 
-include $(LOCAL_PATH)/Core/Android.mk
-include $(LOCAL_PATH)/RawImageLoader/Android.mk
+include $(BUILD_STATIC_LIBRARY)
 
+LOCAL_PATH := $(LOCAL_PATH_BACKUP)
