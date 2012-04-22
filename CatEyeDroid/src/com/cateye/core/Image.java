@@ -1,5 +1,8 @@
 package com.cateye.core;
 
+import android.os.Parcel;
+import android.os.Parcelable;
+
 public class Image
 {
 	protected ImageDescription description;
@@ -38,16 +41,14 @@ public class Image
 
 	public Image(ImageDescription imageDescription, IPreciseBitmap bitmap)
 	{
-/*		if (imageDescription == null)
-			throw new IllegalArgumentException("imageDescription shouldn't be null");
-		
-		if (bitmap == null)
-			throw new IllegalArgumentException("bitmap shouldn't be null");
-*/		
 		this.description = imageDescription;
 		this.bitmap = bitmap;
 	}
 	
+	public Image(Parcel in) {
+		// TODO Auto-generated constructor stub
+	}
+
 	public void free()
 	{
 		if (this.bitmap != null)
@@ -56,4 +57,5 @@ public class Image
 		if (this.description != null)
 			this.description.free();
 	}
+
 }

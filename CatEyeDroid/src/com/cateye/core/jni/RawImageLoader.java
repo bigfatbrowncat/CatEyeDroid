@@ -10,7 +10,6 @@ import com.cateye.core.IProgressListener;
 import com.cateye.core.Image;
 import com.cateye.core.ImageDescription;
 import com.cateye.core.IncorrectImageLoaderRelation;
-import com.cateye.core.jni.LibraryLoader;
 import com.cateye.core.jni.PreciseBitmap;
 
 public class RawImageLoader implements IImageLoader

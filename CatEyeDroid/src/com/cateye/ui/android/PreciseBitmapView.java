@@ -9,11 +9,12 @@ import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 
+import com.cateye.core.IPreciseBitmap;
 import com.cateye.core.jni.PreciseBitmap;
 
 public class PreciseBitmapView extends View
 {
-	PreciseBitmap pb;
+	private IPreciseBitmap pb;
 
 	private void startUpdater()
 	{
@@ -67,7 +68,7 @@ public class PreciseBitmapView extends View
 		}
 		
 	}
-	public void setPreciseBitmap(PreciseBitmap value) 
+	public void setPreciseBitmap(IPreciseBitmap value) 
 	{
 		pb = value; 
 	}

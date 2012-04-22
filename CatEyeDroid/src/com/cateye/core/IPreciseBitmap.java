@@ -18,6 +18,15 @@ public interface IPreciseBitmap
 	void alloc(int width, int height) throws NativeHeapAllocationException;
 	
 	/**
+	 * Gets all the pixel data from the range 
+	 * (x, y, x + width, y + height) of the image 
+	 * and stores it in the buf. If buf is null,
+	 * it will be allocated automatically.
+	 * Returns buf (or newly allocated buffer)
+	 */
+	public int[] getPixels(int[] buf, int x, int y, int screenWidth, int screenHeight, float brightness);
+
+	/**
 	 * Creates a clone of the bitmap
 	 */
 	IPreciseBitmap clone() throws NativeHeapAllocationException, InvalidDataException;
