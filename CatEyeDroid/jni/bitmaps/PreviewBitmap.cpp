@@ -50,12 +50,12 @@ int PreviewBitmap_Free(PreviewBitmap& fb)
 		delete [] fb.r;
 		delete [] fb.g;
 		delete [] fb.b;
-		return BITMAP_RESULT_OK;
 	}
     catch (...) //catch (std:: exception) doesn't work here for some reason!!!
 	{
 		return BITMAP_RESULT_INCORRECT_DATA;
 	}
+	return BITMAP_RESULT_OK;
 }
 
 int PreviewBitmap_FromPreciseBitmap(PreciseBitmap& src, PreviewBitmap& res)
