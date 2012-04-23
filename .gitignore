@@ -1,5 +1,5 @@
 .metadata/*
-CatEyeDroid/.settings/*
+*/.settings/*
 CatEyeDroid/bin/*
 CatEyeDroid/gen/*
 CatEyeDroid/libs/*
