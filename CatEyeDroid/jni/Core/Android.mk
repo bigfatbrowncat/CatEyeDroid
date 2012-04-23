@@ -28,7 +28,7 @@ include $(CLEAR_VARS)
 LOCAL_MODULE    := libCore
 LOCAL_LDLIBS    := -llog
 LOCAL_CFLAGS    := -fexceptions -ffast-math -O3 -funroll-loops
-LOCAL_C_INCLUDES:= $(LOCAL_PATH)/../
+LOCAL_C_INCLUDES:= $(LOCAL_PATH)/../ $(LOCAL_PATH)/../../../bitmaps/include
 LOCAL_SRC_FILES := CorePreciseBitmap.cpp \
                    CorePreviewBitmap.cpp
 

@@ -28,7 +28,10 @@ include $(CLEAR_VARS)
 LOCAL_MODULE    := libRawImageLoader
 LOCAL_LDLIBS    := -llog
 LOCAL_CFLAGS    := -fexceptions -ffast-math -O3 -funroll-loops
-LOCAL_C_INCLUDES:= $(LOCAL_PATH)/../
+LOCAL_C_INCLUDES:= $(LOCAL_PATH)/../ \
+                   $(LOCAL_PATH)/../../../bitmaps/include \
+                   $(LOCAL_PATH)/../../../libraw/libraw \
+                   $(LOCAL_PATH)/../../../jpeg-8c/include
 LOCAL_SRC_FILES := RawImageLoader.cpp
 
 LOCAL_STATIC_LIBRARIES := libraw libbitmaps libjpeg8c

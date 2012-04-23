@@ -1,0 +1,2 @@
+Don't remove this file it's needed to keep the "bin" folder.
+"bin" folder is needed to resolve buildpath dependencies in CatEye java projects 

@@ -1,0 +1,5 @@
+This is the LibRaw library, simplified and adapted to be easily built and used with other applications. 
+
+The default ./configure changed to a simple makefile.
+
+All licenses are in the docs folder
