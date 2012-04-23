@@ -1,7 +1,7 @@
 .metadata/*
 */.settings/*
-CatEyeDroid/bin/*
-CatEyeDroid/gen/*
-CatEyeDroid/libs/*
+*/bin/*
+*/gen/*
+*/libs/*
 CatEyeDroid/lint.xml
-CatEyeDroid/obj/*
+*/obj/*

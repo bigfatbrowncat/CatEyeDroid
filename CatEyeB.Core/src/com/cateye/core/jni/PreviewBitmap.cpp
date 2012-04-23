@@ -1,16 +1,15 @@
-//#include <com/cateye/core/jni/PreciseBitmap.h>
+//#include <com/cateye/core/jni/PreviewBitmap.h>
 #include <jni.h>
 #include <bitmaps.h>
-#include <android/log.h>
 
-#define DEBUG_INFO	//printf("%d\n", __LINE__);fflush(stdout);
-//#define DEBUG_INFO __android_log_print(ANDROID_LOG_INFO, "CorePreciseBitmap", "At line %d", __LINE__);
-
+#ifndef NULL
 #define NULL					0
+#endif
+
 #define NATIVE_OUT_OF_MEMORY	"Out of memory during native image allocation"
 #define INVALID_IMAGE_DATA		"Invalid image data"
 
-extern "C" JNIEXPORT void JNICALL Java_com_cateye_core_jni_PreciseBitmap_alloc
+JNIEXPORT void JNICALL Java_com_cateye_core_jni_PreviewBitmap_alloc
 	(JNIEnv * env, jobject obj, jint width, jint height)
 {
 	// Getting the class
@@ -27,8 +26,8 @@ extern "C" JNIEXPORT void JNICALL Java_com_cateye_core_jni_PreciseBitmap_alloc
 	height_id = env->GetFieldID(cls, "height", "I");
 
 	// Creating the bitmap
-	PreciseBitmap pbmp;
-	int res = PreciseBitmap_Init(pbmp, width, height);
+	PreviewBitmap pbmp;
+	int res = PreviewBitmap_Init(pbmp, width, height);
 
 	switch (res)
 	{
@@ -51,7 +50,7 @@ extern "C" JNIEXPORT void JNICALL Java_com_cateye_core_jni_PreciseBitmap_alloc
 
 }
 
-extern "C" JNIEXPORT void JNICALL Java_com_cateye_core_jni_PreciseBitmap_free
+JNIEXPORT void JNICALL Java_com_cateye_core_jni_PreviewBitmap_free
 	(JNIEnv * env, jobject obj)
 {
 	// Getting the class
@@ -68,14 +67,14 @@ extern "C" JNIEXPORT void JNICALL Java_com_cateye_core_jni_PreciseBitmap_free
 	height_id = env->GetFieldID(cls, "height", "I");
 
 	// Getting the bitmap from JVM
-	PreciseBitmap pbmp;
-	pbmp.r = (float*)env->GetLongField(obj, r_id);
-	pbmp.g = (float*)env->GetLongField(obj, g_id);
-	pbmp.b = (float*)env->GetLongField(obj, b_id);
+	PreviewBitmap pbmp;
+	pbmp.r = (Int8*)env->GetLongField(obj, r_id);
+	pbmp.g = (Int8*)env->GetLongField(obj, g_id);
+	pbmp.b = (Int8*)env->GetLongField(obj, b_id);
 	pbmp.width = env->GetIntField(obj, width_id);
 	pbmp.height = env->GetIntField(obj, height_id);
 
-	int res = PreciseBitmap_Free(pbmp);
+	int res = PreviewBitmap_Free(pbmp);
 
 	switch (res)
 	{
@@ -97,7 +96,7 @@ extern "C" JNIEXPORT void JNICALL Java_com_cateye_core_jni_PreciseBitmap_free
 
 }
 
-extern "C" JNIEXPORT jobject JNICALL Java_com_cateye_core_jni_PreciseBitmap_clone
+JNIEXPORT jobject JNICALL Java_com_cateye_core_jni_PreviewBitmap_clone
 	(JNIEnv * env, jobject obj)
 {
 	// Getting the class
@@ -114,16 +113,16 @@ extern "C" JNIEXPORT jobject JNICALL Java_com_cateye_core_jni_PreciseBitmap_clon
 	height_id = env->GetFieldID(cls, "height", "I");
 
 	// Getting the bitmap from JVM
-	PreciseBitmap src;
-	src.r = (float*)env->GetLongField(obj, r_id);
-	src.g = (float*)env->GetLongField(obj, g_id);
-	src.b = (float*)env->GetLongField(obj, b_id);
+	PreviewBitmap src;
+	src.r = (Int8*)env->GetLongField(obj, r_id);
+	src.g = (Int8*)env->GetLongField(obj, g_id);
+	src.b = (Int8*)env->GetLongField(obj, b_id);
 	src.width = env->GetIntField(obj, width_id);
 	src.height = env->GetIntField(obj, height_id);
 
-	PreciseBitmap dest;
+	PreviewBitmap dest;
 
-	int res = PreciseBitmap_Copy(src, dest);
+	int res = PreviewBitmap_Copy(src, dest);
 
 	switch (res)
 	{
@@ -151,70 +150,4 @@ extern "C" JNIEXPORT jobject JNICALL Java_com_cateye_core_jni_PreciseBitmap_clon
 
 		return ret_obj;
 	}
-}
-
-extern "C" JNIEXPORT jintArray JNICALL Java_com_cateye_core_jni_PreciseBitmap_getPixels
-	(JNIEnv * env, jobject obj, jintArray buf, jint x, jint y, jint screenWidth, jint screenHeight, jfloat brightness)
-{
-	// Getting the class
-	jclass cls = env->GetObjectClass(obj);
-	DEBUG_INFO
-	jclass exception_cls;
-
-	DEBUG_INFO
-
-	// Getting field ids
-	jfieldID r_id, g_id, b_id, width_id, height_id;
-	r_id = env->GetFieldID(cls, "r", "J");
-	g_id = env->GetFieldID(cls, "g", "J");
-	b_id = env->GetFieldID(cls, "b", "J");
-	width_id = env->GetFieldID(cls, "width", "I");
-	height_id = env->GetFieldID(cls, "height", "I");
-
-	DEBUG_INFO
-
-	// Getting the bitmap from JVM
-	PreciseBitmap pbmp;
-	pbmp.r = (float*)env->GetLongField(obj, r_id);
-	pbmp.g = (float*)env->GetLongField(obj, g_id);
-	pbmp.b = (float*)env->GetLongField(obj, b_id);
-	pbmp.width = env->GetIntField(obj, width_id);
-	pbmp.height = env->GetIntField(obj, height_id);
-
-	DEBUG_INFO
-
-	if (buf == NULL)
-	{
-		__android_log_print(ANDROID_LOG_INFO, "CorePreciseBitmap", "Allocating %dx%d pixels (%d bytes)", screenWidth, screenHeight, screenWidth * screenHeight * sizeof(jint));
-		buf = env->NewIntArray(screenWidth * screenHeight);
-	}
-	jint* pixels = env->GetIntArrayElements(buf, 0);
-
-	DEBUG_INFO
-
-    for (int j = 0; j < screenHeight; j++)
-   	for (int i = 0; i < screenWidth; i++)
-   	{
-   		int srcx = i + x;
-   		int srcy = j + y;
-
-   		if (srcx < 0 || srcy < 0 || srcx >= pbmp.width || srcy >= pbmp.height)
-   		{
-   			pixels[j * screenWidth + i] = 0;
-   		}
-   		else
-   		{
-			int r = pbmp.r[srcy * pbmp.width + srcx] * brightness,
-				g = pbmp.g[srcy * pbmp.width + srcx] * brightness,
-				b = pbmp.b[srcy * pbmp.width + srcx] * brightness;
-
-			if (r > 255) r = 255;
-			if (g > 255) g = 255;
-			if (b > 255) b = 255;
-
-			pixels[j * screenWidth + i] = (0xff << 24) + (r << 16) + (g << 8) + b;
-   		}
-   	}
-	DEBUG_INFO
-    return buf;
 }

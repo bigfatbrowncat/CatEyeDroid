@@ -1,11 +1,10 @@
 package com.cateye.core.jni;
 
-import com.cateye.core.IPreciseBitmap;
+import com.cateye.core.IPreviewBitmap;
 import com.cateye.core.InvalidDataException;
 import com.cateye.core.NativeHeapAllocationException;
-import com.cateye.core.jni.LibraryLoader;
 
-public class PreciseBitmap implements IPreciseBitmap
+class PreviewBitmap implements IPreviewBitmap
 {
 	/**
 	 * Width of bitmap. 
@@ -37,24 +36,26 @@ public class PreciseBitmap implements IPreciseBitmap
 	 */
 	long b;
 	
+	@Override
 	public int getWidth()
 	{
 		return width;
 	}
 	
+	@Override
 	public int getHeight()
 	{
 		return height;
 	}
 	
+	@Override
 	public native void alloc(int width, int height) throws NativeHeapAllocationException;
-	
-	public native int[] getPixels(int[] buf, int x, int y, int screenWidth, int screenHeight, float brightness);
-	
+
+	@Override
 	public native void free() throws InvalidDataException;
 	
 	@Override
-	public native IPreciseBitmap clone() throws NativeHeapAllocationException, InvalidDataException;
+	public native IPreviewBitmap clone() throws NativeHeapAllocationException, InvalidDataException;
 
 	@Override
 	protected void finalize() throws Throwable {
@@ -66,4 +67,5 @@ public class PreciseBitmap implements IPreciseBitmap
 	{
 		System.loadLibrary("Core");
 	}
+
 }

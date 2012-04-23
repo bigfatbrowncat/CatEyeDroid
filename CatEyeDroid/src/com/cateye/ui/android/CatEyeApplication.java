@@ -1,17 +1,11 @@
 package com.cateye.ui.android;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 
 import com.cateye.core.Image;
-import com.cateye.core.jni.PreciseBitmap;
 import com.cateye.core.jni.RawImageLoader;
 
 import android.app.Application;
-import android.app.ProgressDialog;
-import android.content.Context;
-import android.os.Environment;
 
 public class CatEyeApplication extends Application 
 {

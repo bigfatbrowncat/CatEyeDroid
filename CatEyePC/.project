@@ -3,18 +3,6 @@
 	<name>target</name>
 	<comment></comment>
 	<projects>
-		<project>bitmaps</project>
-		<project>CatEyeB.Application.Swt</project>
-		<project>CatEyeB.BasicStageOperations</project>
-		<project>CatEyeB.Core</project>
-		<project>CatEyeB.PpmImageSaver</project>
-		<project>CatEyeB.RawImageLoader</project>
-		<project>CatEyeB.Tests</project>
-		<project>CatEyeB.UI.SwtImageViewer</project>
-		<project>colorlib</project>
-		<project>ExternalLibs</project>
-		<project>jpeg-8c</project>
-		<project>libraw</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>

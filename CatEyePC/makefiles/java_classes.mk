@@ -2,7 +2,7 @@
 
 TARGET_BIN = $(TARGET)/bin
 
-EXTERNAL_JARS = $(shell find ../ExternalLibs/lib -name \*.jar -printf "%p;")
+EXTERNAL_JARS = #$(shell find ../ExternalLibs/lib -name \*.jar -printf "%p;")
 
 JAVA_FILES := $(shell cd $(SOURCE); find . -name \*.java)
 CLASS_FILES = $(addprefix $(TARGET_BIN)/,$(addsuffix .class,$(basename $(JAVA_FILES))))
