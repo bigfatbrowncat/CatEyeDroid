@@ -9,3 +9,5 @@ core:
 clean:
 	make -f Classes.mk clean
 	make -C ../CatEyeB.Core -f Classes.mk clean
+	rm -rf obj/*
+	rm -rf libs/*
