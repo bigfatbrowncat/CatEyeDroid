@@ -35,13 +35,16 @@ public class PreciseBitmapViewActivity extends Activity
 	        	Log.i("PreciseBitmapViewActivity", "Received ACTION_VIEW intent. Loading the image...");
 	        	String path = getIntent().getData().getPath();
 	        	rawImage = app.loadImage(path);
-	        	rawView.setPreciseBitmap(rawImage.getBitmap());
 	        }
 	        else
 	        {
 	        	Log.i("PreciseBitmapViewActivity", "Intent action isn't ACTION_VIEW ...");
 	        }
         }
+    	if (rawImage != null) 
+    	{
+    		rawView.setPreciseBitmap(rawImage.getBitmap());
+    	}
     }
 
 	@Override
@@ -52,11 +55,11 @@ public class PreciseBitmapViewActivity extends Activity
 		super.onSaveInstanceState(outState);
 	}
 
-	@Override
+/*	@Override
 	protected void onRestoreInstanceState(Bundle savedInstanceState) {
 		super.onRestoreInstanceState(savedInstanceState);
 		onCreate(savedInstanceState);
-	}
+	}*/
 	
 	@Override
 	public void onBackPressed() {
