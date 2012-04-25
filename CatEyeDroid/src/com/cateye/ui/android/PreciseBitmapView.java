@@ -26,15 +26,9 @@ public class PreciseBitmapView extends View
 				{
 					while (PreciseBitmapView.this.isShown())
 					{
-						//if (bitmapWidth != getWidth())
-						{
-				        	bitmapWidth = getWidth();
-						}
-						//if (bitmapHeight != getHeight())
-						{
-							bitmapHeight = getHeight();
-						}
-	
+						bitmapWidth = getWidth();
+						bitmapHeight = getHeight();
+
 						if (pb != null && bitmapWidth > 0 && bitmapHeight > 0)
 						{
 							float deltaXOld = deltaX;
@@ -124,7 +118,6 @@ public class PreciseBitmapView extends View
 		canvas.drawLine(0, 0, getWidth(), getHeight(), pnt);
 		canvas.drawBitmap(image, 0, 0, null);*/
 		
-
         synchronized (this)
         {
         	canvas.drawBitmap(image, deltaX, deltaY, null);
@@ -134,11 +127,23 @@ public class PreciseBitmapView extends View
 	@Override
 	public boolean onTouchEvent(MotionEvent event) 
 	{
-		if (event.getActionMasked() == MotionEvent.ACTION_DOWN)
+		if (event.getActionMasked() == MotionEvent.ACTION_DOWN ||
+		    event.getActionMasked() == MotionEvent.ACTION_POINTER_DOWN)
 		{
 	        synchronized (this)
 	        {
-	        	fingerStartPosition = new PointF(event.getX(), event.getY());
+	        	fingerStartPosition = new PointF(event.getX(0), event.getY(0));
+	        	currentFingerPosition = fingerStartPosition;
+	        }
+			return true;
+		}
+		else if (event.getActionMasked() == MotionEvent.ACTION_POINTER_UP)
+		{
+	        synchronized (this)
+	        {
+	        	int k = 0;
+	        	if (k == event.getActionIndex()) k++;
+	        	fingerStartPosition = new PointF(event.getX(k), event.getY(k));
 	        	currentFingerPosition = fingerStartPosition;
 	        }
 			return true;
@@ -160,6 +165,8 @@ public class PreciseBitmapView extends View
 			invalidate();
 			return true;
 		}
+
+		
 		return super.onTouchEvent(event);
 	}
 
