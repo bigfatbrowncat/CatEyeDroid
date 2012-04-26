@@ -1,5 +1,7 @@
 package com.cateye.ui.android;
 
+import java.util.ArrayList;
+
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -8,6 +10,7 @@ import android.util.AttributeSet;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
+import android.view.MotionEvent.PointerCoords;
 import android.view.View;
 import android.widget.SlidingDrawer;
 
@@ -35,14 +38,17 @@ public class PreciseBitmapView extends View
 	}
 
 	private IPreciseBitmap pb;
+    private float posX, posY;
     private volatile float deltaX, deltaY;
     private volatile float panX, panY;
-    private volatile PointF fingerStartPosition = new PointF(0,0), currentFingerPosition = new PointF(0,0);
+    private volatile PointF fingerStartPosition = new PointF(0,0);//, currentFingerPosition = new PointF(0,0);
     private volatile Bitmap image = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888);
     private volatile int[] pixels;
     private volatile int bitmapWidth = 1, bitmapHeight = 1;
     private Thread updatingThread = null;
 	private volatile boolean updaterCancelPending = false;
+	private ArrayList<PointF> oldFingers = new ArrayList<PointF>();
+	
 	
 	private void ensureUpdaterStopped()
 	{
@@ -81,11 +87,15 @@ public class PreciseBitmapView extends View
 					bitmapWidth = getWidth();
 					bitmapHeight = getHeight();
 
-					Log.i("PreciseBitmapView", "pb is null? " + (pb == null));
 					if (pb != null && bitmapWidth > 0 && bitmapHeight > 0)
 					{
-						float deltaXOld = deltaX;
-						float deltaYOld = deltaY;
+						float deltaXOld = 0;
+						float deltaYOld = 0;
+				       	synchronized (this) 
+				       	{
+				       		deltaXOld = deltaX;
+				       		deltaYOld = deltaY;
+				       	}
 						panX -= deltaXOld;
 						panY -= deltaYOld;
 						
@@ -101,8 +111,6 @@ public class PreciseBitmapView extends View
 					       	image = newImage;
 							deltaX -= deltaXOld;
 							deltaY -= deltaYOld;
-							fingerStartPosition = new PointF(currentFingerPosition.x - deltaX,
-							                                 currentFingerPosition.y - deltaY);
 						}
 				       	PreciseBitmapView.this.postInvalidate();
 					}
@@ -161,14 +169,75 @@ public class PreciseBitmapView extends View
         }
 	}
 	
-	@Override
-	public boolean onKeyDown(int keyCode, KeyEvent event)
+	synchronized void changeFingersCount(ArrayList<PointF> newFingers)
 	{
-		if (event.getKeyCode() == KeyEvent.KEYCODE_BACK) 
+		Log.i("PreciseBitmapView", "There were " + oldFingers.size() + " fingers, but now there are " + newFingers.size());
+		if (newFingers.size() > 0)
 		{
-			updaterCancelPending = true;
+			float oldX = 0, oldY = 0;
+			if (oldFingers.size() > 0)
+			{			
+				for (int i = 0; i < oldFingers.size(); i++)
+				{
+					oldX += oldFingers.get(i).x;
+					oldY += oldFingers.get(i).y;
+				}
+				oldX /= oldFingers.size();
+				oldY /= oldFingers.size();
+			}
+			
+			float newX = 0, newY = 0;
+			for (int i = 0; i < newFingers.size(); i++)
+			{
+				newX += newFingers.get(i).x;
+				newY += newFingers.get(i).y;
+			}
+			newX /= newFingers.size();
+			newY /= newFingers.size();
+			
+			if (oldFingers.size() > 0)
+			{			
+				float dX = newX - oldX;
+				float dY = newX - oldY;
+				fingerStartPosition = new PointF(fingerStartPosition.x + dX,
+				                                 fingerStartPosition.y + dY);
+			}
+			else
+			{
+				fingerStartPosition = new PointF(newX, newY);
+			}
 		}
-		return super.onKeyDown(keyCode, event);
+	}
+	
+	ArrayList<PointF> arrayToFingers(MotionEvent event)
+	{
+    	ArrayList<PointF> curFingers = new ArrayList<PointF>();
+    	for (int i = 0; i < event.getPointerCount(); i++)
+    	{
+    		PointerCoords pc = new PointerCoords();
+    		event.getPointerCoords(i, pc);
+    		
+    		if ((event.getActionMasked() != MotionEvent.ACTION_UP &&
+   		        event.getActionMasked() != MotionEvent.ACTION_POINTER_UP) ||
+   		        event.getActionIndex() != i)		// to remove fingers which are not here already
+    		{
+    			curFingers.add(new PointF(pc.x, pc.y));
+    		}
+    	}
+    	return curFingers;
+	}
+	
+	PointF getCenter(ArrayList<PointF> points)
+	{
+    	float cX = 0, cY = 0;
+    	for (int i = 0; i < points.size(); i++)
+    	{
+    		cX += points.get(i).x; 
+    		cY += points.get(i).y;
+    	}
+    	cX /= points.size();
+    	cY /= points.size();
+    	return new PointF(cX, cY);
 	}
 	
 	@Override
@@ -177,42 +246,38 @@ public class PreciseBitmapView extends View
 		if (event.getActionMasked() == MotionEvent.ACTION_DOWN ||
 		    event.getActionMasked() == MotionEvent.ACTION_POINTER_DOWN)
 		{
-	        synchronized (this)
-	        {
-	        	fingerStartPosition = new PointF(event.getX(0), event.getY(0));
-	        	currentFingerPosition = fingerStartPosition;
-	        }
+			ArrayList<PointF> f = arrayToFingers(event);
+			PointF cen = getCenter(f);
+			posX = cen.x; posY = cen.y;
 			return true;
 		}
-		else if (event.getActionMasked() == MotionEvent.ACTION_POINTER_UP)
+		else if (event.getActionMasked() == MotionEvent.ACTION_UP ||
+		         event.getActionMasked() == MotionEvent.ACTION_POINTER_UP)
 		{
-	        synchronized (this)
-	        {
-	        	int k = 0;
-	        	if (k == event.getActionIndex()) k++;
-	        	fingerStartPosition = new PointF(event.getX(k), event.getY(k));
-	        	currentFingerPosition = fingerStartPosition;
-	        }
+			ArrayList<PointF> f = arrayToFingers(event);
+			if (f.size() > 0)
+			{
+				PointF cen = getCenter(f);
+				posX = cen.x; posY = cen.y;
+			}
 			return true;
 		}
 		else if (event.getActionMasked() == MotionEvent.ACTION_MOVE)
 		{
-	        synchronized (this)
-	        {
-				currentFingerPosition = new PointF(event.getX(), event.getY());
-				deltaX = currentFingerPosition.x - fingerStartPosition.x;
-				deltaY = currentFingerPosition.y - fingerStartPosition.y;
-	        }
+			ArrayList<PointF> f = arrayToFingers(event);
+			PointF cen = getCenter(f);
+
+			synchronized (this)
+			{
+				deltaX += cen.x - posX;
+				deltaY += cen.y - posY;
+			}
+			
+			posX = cen.x; posY = cen.y;
 			
 			invalidate();
 			return true;
 		}
-		else if (event.getActionMasked() == MotionEvent.ACTION_UP)
-		{
-			invalidate();
-			return true;
-		}
-
 		
 		return super.onTouchEvent(event);
 	}
