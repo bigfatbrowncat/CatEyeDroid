@@ -55,16 +55,22 @@ public class PreciseBitmapViewActivity extends Activity
 		super.onSaveInstanceState(outState);
 	}
 
-/*	@Override
-	protected void onRestoreInstanceState(Bundle savedInstanceState) {
-		super.onRestoreInstanceState(savedInstanceState);
-		onCreate(savedInstanceState);
-	}*/
+	@Override
+	public void onBackPressed() 
+	{
+		super.onBackPressed();
+    	if (rawImage != null)
+    	{
+    		CatEyeApplication app = ((CatEyeApplication) getApplication());
+			app.forgetImage(rawImage);
+	    	Log.i("PreciseBitmapViewActivity", "The image have forgotten");
+    	}
+	}
 	
 	@Override
-	public void onBackPressed() {
-		CatEyeApplication app = ((CatEyeApplication) getApplication());
-		app.forgetImage(rawImage);
-		super.onBackPressed();
+	protected void onDestroy() {
+    	Log.i("PreciseBitmapViewActivity", "Destroying the activity");
+		super.onDestroy();
 	}
+	
 }

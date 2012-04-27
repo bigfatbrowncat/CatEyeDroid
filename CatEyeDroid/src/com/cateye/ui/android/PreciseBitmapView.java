@@ -49,7 +49,6 @@ public class PreciseBitmapView extends View
 	private volatile boolean updaterCancelPending = false;
 	private ArrayList<PointF> oldFingers = new ArrayList<PointF>();
 	
-	
 	private void ensureUpdaterStopped()
 	{
 		if (updatingThread != null && updatingThread.isAlive())
@@ -101,7 +100,7 @@ public class PreciseBitmapView extends View
 						
 						Bitmap newImage = Bitmap.createBitmap(bitmapWidth, bitmapHeight, Bitmap.Config.ARGB_8888);
 						pixels = pb.getPixels(pixels, (int)(panX), (int)(panY), bitmapWidth, bitmapHeight, 1000, 0.5f);
-						if (newImage != null && !newImage.isRecycled())
+						if (newImage != null && !newImage.isRecycled() && pixels != null)
 						{
 							newImage.setPixels(pixels, 0, bitmapWidth, 0, 0, bitmapWidth, bitmapHeight);
 						}
@@ -137,11 +136,12 @@ public class PreciseBitmapView extends View
 	
 	public void setPreciseBitmap(IPreciseBitmap value) 
 	{
-		pb = value; 
+		pb = value;
 	}
 	
 	@Override
 	protected void onDetachedFromWindow() {
+		Log.i("PreciseBitmapView", "onDetachedFromWindow");
 		ensureUpdaterStopped();
 		super.onDetachedFromWindow();
 	}
@@ -149,6 +149,7 @@ public class PreciseBitmapView extends View
 	@Override
 	protected void onAttachedToWindow()
 	{
+		Log.i("PreciseBitmapView", "onAttachedToWindow");
 		super.onAttachedToWindow();
 		startUpdater();
 	}

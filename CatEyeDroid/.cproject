@@ -25,6 +25,9 @@
 								<option id="gnu.both.asm.option.include.paths.1160637633" name="Include paths (-I)" superClass="gnu.both.asm.option.include.paths" valueType="includePath">
 									<listOptionValue builtIn="false" value="&quot;C:\android-ndk-r7c\platforms\android-9\arch-arm\usr\include&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CatEyeDroid/jni}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/jpeg-8c/include}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/bitmaps/include}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/libraw/libraw}&quot;"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.assembler.input.1913991152" superClass="cdt.managedbuild.tool.gnu.assembler.input"/>
 							</tool>
@@ -34,6 +37,9 @@
 									<listOptionValue builtIn="false" value="&quot;C:\android-ndk-r7c\platforms\android-9\arch-arm\usr\include&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CatEyeDroid/jni}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;C:\android-ndk-r7c\sources\cxx-stl\gnu-libstdc++\include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/jpeg-8c/include}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/bitmaps/include}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/libraw/libraw}&quot;"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1430035150" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 							</tool>
@@ -41,6 +47,9 @@
 								<option id="gnu.c.compiler.option.include.paths.852993598" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths" valueType="includePath">
 									<listOptionValue builtIn="false" value="&quot;C:\android-ndk-r7c\platforms\android-9\arch-arm\usr\include&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CatEyeDroid/jni}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/jpeg-8c/include}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/bitmaps/include}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/libraw/libraw}&quot;"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.1170261959" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
 							</tool>

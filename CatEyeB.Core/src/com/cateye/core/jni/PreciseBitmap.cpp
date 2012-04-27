@@ -216,6 +216,8 @@ extern "C" JNIEXPORT jintArray JNICALL Java_com_cateye_core_jni_PreciseBitmap_ge
 			pixels[j * screenWidth + i] = (0xff << 24) + (r << 16) + (g << 8) + b;
    		}
    	}
+	env->ReleaseIntArrayElements(buf, pixels, JNI_COMMIT);
+
 	DEBUG_INFO
     return buf;
 }
