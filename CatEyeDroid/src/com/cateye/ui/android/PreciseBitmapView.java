@@ -45,6 +45,7 @@ public class PreciseBitmapView extends View
     private volatile Bitmap image = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888);
     private volatile int[] pixels;
     private volatile int bitmapWidth = 1, bitmapHeight = 1;
+    private volatile boolean updatePending = false;
     private Thread updatingThread = null;
 	private volatile boolean updaterCancelPending = false;
 	private ArrayList<PointF> oldFingers = new ArrayList<PointF>();
@@ -57,6 +58,10 @@ public class PreciseBitmapView extends View
 			{
         		Log.i("PreciseBitmapView", "Joining updater...");
         		updaterCancelPending = true;
+    			synchronized (updatingThread)
+    			{
+    				updatingThread.notify();
+    			}
 				updatingThread.join();
 	    		Log.i("PreciseBitmapView", "Joined.");				
 			}
@@ -125,6 +130,23 @@ public class PreciseBitmapView extends View
 							e.printStackTrace();
 						}
 					}
+					
+					if (!updatePending)
+					{
+						synchronized (updatingThread)
+						{
+							try
+							{
+								updatingThread.wait();
+							}
+							catch (InterruptedException e)
+							{
+								// TODO Auto-generated catch block
+								e.printStackTrace();
+							}
+						}
+					}
+					updatePending = false;
 				}
 				Log.i("PreciseBitmapView", "Updating thread stopped");
 			}
@@ -134,13 +156,27 @@ public class PreciseBitmapView extends View
 		updatingThread.start();
 	}
 	
+	public void update()
+	{
+		if (updatingThread != null && updatingThread.isAlive())
+		{
+			synchronized (updatingThread)
+			{
+				updatePending = true;
+				updatingThread.notify();
+			}
+		}
+	}
+	
 	public void setPreciseBitmap(IPreciseBitmap value) 
 	{
 		pb = value;
+		update();
 	}
 	
 	@Override
-	protected void onDetachedFromWindow() {
+	protected void onDetachedFromWindow()
+	{
 		Log.i("PreciseBitmapView", "onDetachedFromWindow");
 		ensureUpdaterStopped();
 		super.onDetachedFromWindow();
@@ -261,6 +297,7 @@ public class PreciseBitmapView extends View
 				PointF cen = getCenter(f);
 				posX = cen.x; posY = cen.y;
 			}
+			update();
 			return true;
 		}
 		else if (event.getActionMasked() == MotionEvent.ACTION_MOVE)
@@ -277,6 +314,7 @@ public class PreciseBitmapView extends View
 			posX = cen.x; posY = cen.y;
 			
 			invalidate();
+			update();
 			return true;
 		}
 		

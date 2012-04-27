@@ -63,7 +63,7 @@ public class PreciseBitmapViewActivity extends Activity
     	{
     		CatEyeApplication app = ((CatEyeApplication) getApplication());
 			app.forgetImage(rawImage);
-	    	Log.i("PreciseBitmapViewActivity", "The image have forgotten");
+	    	Log.i("PreciseBitmapViewActivity", "The image has been forgotten");
     	}
 	}
 	
