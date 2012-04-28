@@ -38,16 +38,15 @@ public class PreciseBitmapView extends View
 	}
 
 	private IPreciseBitmap pb;
-    private float posX, posY;
+    private float posX = 0, posY = 0;
     private volatile float deltaX, deltaY;
     private volatile float panX, panY;
-    private volatile PointF fingerStartPosition = new PointF(0,0);//, currentFingerPosition = new PointF(0,0);
+    private volatile PointF fingerStartPosition = new PointF(0, 0);//, currentFingerPosition = new PointF(0,0);
     private volatile Bitmap image = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888);
     private volatile int[] pixels;
     private volatile int bitmapWidth = 1, bitmapHeight = 1;
     private volatile boolean updatePending = false;
     private Thread updatingThread = null;
-	private volatile boolean updaterCancelPending = false;
 	private ArrayList<PointF> oldFingers = new ArrayList<PointF>();
 	
 	private void ensureUpdaterStopped()
@@ -57,11 +56,6 @@ public class PreciseBitmapView extends View
 			try
 			{
         		Log.i("PreciseBitmapView", "Joining updater...");
-        		updaterCancelPending = true;
-    			synchronized (updatingThread)
-    			{
-    				updatingThread.notify();
-    			}
 				updatingThread.join();
 	    		Log.i("PreciseBitmapView", "Joined.");				
 			}
@@ -73,122 +67,89 @@ public class PreciseBitmapView extends View
 			finally
 			{
 				updatingThread = null;
-				updaterCancelPending = false;
 			}
 		}		
 	}
 	
-	private void startUpdater()
+	private void updateAsync()
 	{
-		ensureUpdaterStopped();
+		updatePending = true;
 		
-		updatingThread = new Thread(new Runnable() {
-			
-			public void run() 
-			{
-				while (!updaterCancelPending)
-				{
-					bitmapWidth = getWidth();
-					bitmapHeight = getHeight();
-
-					if (pb != null && bitmapWidth > 0 && bitmapHeight > 0)
-					{
-						float deltaXOld = 0;
-						float deltaYOld = 0;
-				       	synchronized (this) 
-				       	{
-				       		deltaXOld = deltaX;
-				       		deltaYOld = deltaY;
-				       	}
-						panX -= deltaXOld;
-						panY -= deltaYOld;
-						
-						Bitmap newImage = Bitmap.createBitmap(bitmapWidth, bitmapHeight, Bitmap.Config.ARGB_8888);
-						pixels = pb.getPixels(pixels, (int)(panX), (int)(panY), bitmapWidth, bitmapHeight, 1000, 0.5f);
-						if (newImage != null && !newImage.isRecycled() && pixels != null)
-						{
-							newImage.setPixels(pixels, 0, bitmapWidth, 0, 0, bitmapWidth, bitmapHeight);
-						}
-						
-				       	synchronized (this) 
-				       	{
-					       	image = newImage;
-							deltaX -= deltaXOld;
-							deltaY -= deltaYOld;
-						}
-				       	PreciseBitmapView.this.postInvalidate();
-					}
-					else
-					{
-						try
-						{
-							Thread.sleep(100);
-						}
-						catch (InterruptedException e)
-						{
-							// TODO Auto-generated catch block
-							e.printStackTrace();
-						}
-					}
-					
-					if (!updatePending)
-					{
-						synchronized (updatingThread)
-						{
-							try
-							{
-								updatingThread.wait();
-							}
-							catch (InterruptedException e)
-							{
-								// TODO Auto-generated catch block
-								e.printStackTrace();
-							}
-						}
-					}
-					updatePending = false;
-				}
-				Log.i("PreciseBitmapView", "Updating thread stopped");
-			}
-		});
-		
-		Log.i("PreciseBitmapView", "Starting updater...");
-		updatingThread.start();
-	}
-	
-	public void update()
-	{
-		if (updatingThread != null && updatingThread.isAlive())
+		if (updatingThread == null || !updatingThread.isAlive())
 		{
-			synchronized (updatingThread)
-			{
-				updatePending = true;
-				updatingThread.notify();
-			}
+			updatingThread = new Thread(new Runnable() {
+				
+				public void run() 
+				{
+					while (updatePending)
+					{
+						updatePending = false;
+						bitmapWidth = getWidth();
+						bitmapHeight = getHeight();
+	
+						if (pb != null && bitmapWidth > 0 && bitmapHeight > 0)
+						{
+							Log.i("PreciseBitmapView", "Updating image");
+							float deltaXOld = 0;
+							float deltaYOld = 0;
+					       	synchronized (PreciseBitmapView.this) 
+					       	{
+					       		deltaXOld = deltaX;
+					       		deltaYOld = deltaY;
+					       	}
+							panX -= deltaXOld;
+							panY -= deltaYOld;
+							
+							Bitmap newImage = Bitmap.createBitmap(bitmapWidth, bitmapHeight, Bitmap.Config.ARGB_8888);
+							pixels = pb.getPixels(pixels, (int)(panX), (int)(panY), bitmapWidth, bitmapHeight, 1000, 0.5f);
+							if (newImage != null && !newImage.isRecycled() && pixels != null)
+							{
+								newImage.setPixels(pixels, 0, bitmapWidth, 0, 0, bitmapWidth, bitmapHeight);
+							}
+							
+					       	synchronized (PreciseBitmapView.this) 
+					       	{
+						       	image = newImage;
+								deltaX -= deltaXOld;
+								deltaY -= deltaYOld;
+							}
+					       	
+							Log.i("PreciseBitmapView", "Posting Invalidation message");
+					       	PreciseBitmapView.this.postInvalidate();
+						}
+						else
+						{
+							if (pb == null)
+								Log.i("PreciseBitmapView", "Precise bitmap is null");
+							else if (bitmapWidth == 0 || bitmapHeight == 0)
+								Log.i("PreciseBitmapView", "Width or height is 0");
+								
+						}
+						
+					}
+					Log.i("PreciseBitmapView", "Updating thread stopped");
+				}
+			});
+			
+			Log.i("PreciseBitmapView", "Starting updater...");
+			updatingThread.start();
 		}
 	}
-	
+
 	public void setPreciseBitmap(IPreciseBitmap value) 
 	{
 		pb = value;
-		update();
+		Log.i("PreciseBitmapView", "Precise bitmap changed. Updating");
+		updateAsync();
+	}
+
+	@Override
+	protected void onSizeChanged(int w, int h, int oldw, int oldh) {
+		super.onSizeChanged(w, h, oldw, oldh);
+		Log.i("PreciseBitmapView", "Size changed. Updating");
+		updateAsync();
 	}
 	
-	@Override
-	protected void onDetachedFromWindow()
-	{
-		Log.i("PreciseBitmapView", "onDetachedFromWindow");
-		ensureUpdaterStopped();
-		super.onDetachedFromWindow();
-	}
-	
-	@Override
-	protected void onAttachedToWindow()
-	{
-		Log.i("PreciseBitmapView", "onAttachedToWindow");
-		super.onAttachedToWindow();
-		startUpdater();
-	}
 	
 	@Override
 	protected void onDraw(Canvas canvas) 
@@ -297,7 +258,7 @@ public class PreciseBitmapView extends View
 				PointF cen = getCenter(f);
 				posX = cen.x; posY = cen.y;
 			}
-			update();
+			updateAsync();
 			return true;
 		}
 		else if (event.getActionMasked() == MotionEvent.ACTION_MOVE)
@@ -314,7 +275,7 @@ public class PreciseBitmapView extends View
 			posX = cen.x; posY = cen.y;
 			
 			invalidate();
-			update();
+			updateAsync();
 			return true;
 		}
 		
