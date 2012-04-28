@@ -5,7 +5,9 @@ import java.util.ArrayList;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.Matrix;
 import android.graphics.PointF;
+import android.graphics.Rect;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -37,10 +39,18 @@ public class PreciseBitmapView extends View
 		// TODO Auto-generated constructor stub
 	}
 
-	private IPreciseBitmap pb;
-    private float posX = 0, posY = 0;
-    private volatile float deltaX, deltaY;
+	private IPreciseBitmap preciseBitmap;
+    
+	// Panning variables
+	private PointF center = new PointF(0, 0);
+    private volatile float panDeltaX, panDeltaY;
     private volatile float panX, panY;
+    
+    // Zooming variables
+    private float dispersion;
+    private volatile float zoomDelta = 1;
+    private volatile float zoom = 1;
+    
     private volatile PointF fingerStartPosition = new PointF(0, 0);//, currentFingerPosition = new PointF(0,0);
     private volatile Bitmap image = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888);
     private volatile int[] pixels;
@@ -48,28 +58,6 @@ public class PreciseBitmapView extends View
     private volatile boolean updatePending = false;
     private Thread updatingThread = null;
 	private ArrayList<PointF> oldFingers = new ArrayList<PointF>();
-	
-	private void ensureUpdaterStopped()
-	{
-		if (updatingThread != null && updatingThread.isAlive())
-		{
-			try
-			{
-        		Log.i("PreciseBitmapView", "Joining updater...");
-				updatingThread.join();
-	    		Log.i("PreciseBitmapView", "Joined.");				
-			}
-			catch (InterruptedException e)
-			{
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			finally
-			{
-				updatingThread = null;
-			}
-		}		
-	}
 	
 	private void updateAsync()
 	{
@@ -87,21 +75,21 @@ public class PreciseBitmapView extends View
 						bitmapWidth = getWidth();
 						bitmapHeight = getHeight();
 	
-						if (pb != null && bitmapWidth > 0 && bitmapHeight > 0)
+						if (preciseBitmap != null && bitmapWidth > 0 && bitmapHeight > 0)
 						{
 							Log.i("PreciseBitmapView", "Updating image");
 							float deltaXOld = 0;
 							float deltaYOld = 0;
 					       	synchronized (PreciseBitmapView.this) 
 					       	{
-					       		deltaXOld = deltaX;
-					       		deltaYOld = deltaY;
+					       		deltaXOld = panDeltaX;
+					       		deltaYOld = panDeltaY;
 					       	}
 							panX -= deltaXOld;
 							panY -= deltaYOld;
 							
 							Bitmap newImage = Bitmap.createBitmap(bitmapWidth, bitmapHeight, Bitmap.Config.ARGB_8888);
-							pixels = pb.getPixels(pixels, (int)(panX), (int)(panY), bitmapWidth, bitmapHeight, 1000, 0.5f);
+							pixels = preciseBitmap.getPixels(pixels, (int)(panX), (int)(panY), bitmapWidth, bitmapHeight, 1000, 0.5f);
 							if (newImage != null && !newImage.isRecycled() && pixels != null)
 							{
 								newImage.setPixels(pixels, 0, bitmapWidth, 0, 0, bitmapWidth, bitmapHeight);
@@ -110,8 +98,8 @@ public class PreciseBitmapView extends View
 					       	synchronized (PreciseBitmapView.this) 
 					       	{
 						       	image = newImage;
-								deltaX -= deltaXOld;
-								deltaY -= deltaYOld;
+								panDeltaX -= deltaXOld;
+								panDeltaY -= deltaYOld;
 							}
 					       	
 							Log.i("PreciseBitmapView", "Posting Invalidation message");
@@ -119,7 +107,7 @@ public class PreciseBitmapView extends View
 						}
 						else
 						{
-							if (pb == null)
+							if (preciseBitmap == null)
 								Log.i("PreciseBitmapView", "Precise bitmap is null");
 							else if (bitmapWidth == 0 || bitmapHeight == 0)
 								Log.i("PreciseBitmapView", "Width or height is 0");
@@ -138,7 +126,7 @@ public class PreciseBitmapView extends View
 
 	public void setPreciseBitmap(IPreciseBitmap value) 
 	{
-		pb = value;
+		preciseBitmap = value;
 		Log.i("PreciseBitmapView", "Precise bitmap changed. Updating");
 		updateAsync();
 	}
@@ -163,7 +151,16 @@ public class PreciseBitmapView extends View
 		
         synchronized (this)
         {
-        	canvas.drawBitmap(image, deltaX, deltaY, null);
+        	//canvas.drawBitmap(image, panDeltaX, panDeltaY, null);
+        	Rect src = new Rect(
+        			(int)(panDeltaX + center.x), 
+        			(int)(panDeltaY + center.y), 
+        			(int)(panDeltaX + center.x + bitmapWidth / zoomDelta), 
+        			(int)(panDeltaY + center.y + bitmapHeight / zoomDelta)
+        	);
+        	
+        	Rect dst = new Rect(0, 0, bitmapWidth, bitmapHeight);
+        	canvas.drawBitmap(image, src, dst, null);
         }
 	}
 	
@@ -207,7 +204,7 @@ public class PreciseBitmapView extends View
 		}
 	}
 	
-	ArrayList<PointF> arrayToFingers(MotionEvent event)
+	ArrayList<PointF> extractFingers(MotionEvent event)
 	{
     	ArrayList<PointF> curFingers = new ArrayList<PointF>();
     	for (int i = 0; i < event.getPointerCount(); i++)
@@ -238,41 +235,60 @@ public class PreciseBitmapView extends View
     	return new PointF(cX, cY);
 	}
 	
+	float getDispersion(ArrayList<PointF> points)
+	{
+		PointF center = getCenter(points);
+		
+    	float d = 0;
+    	for (int i = 0; i < points.size(); i++)
+    	{
+    		double dx = points.get(i).x - center.x; 
+    		double dy = points.get(i).y - center.y;
+    		d += Math.sqrt(dx * dx + dy * dy);	// distance
+    	}
+    	d /= points.size();		// average distance
+    	
+		return d;
+	}
+	
 	@Override
 	public boolean onTouchEvent(MotionEvent event) 
 	{
 		if (event.getActionMasked() == MotionEvent.ACTION_DOWN ||
 		    event.getActionMasked() == MotionEvent.ACTION_POINTER_DOWN)
 		{
-			ArrayList<PointF> f = arrayToFingers(event);
-			PointF cen = getCenter(f);
-			posX = cen.x; posY = cen.y;
+			ArrayList<PointF> f = extractFingers(event);
+			center = getCenter(f);
+			dispersion = getDispersion(f);
 			return true;
 		}
 		else if (event.getActionMasked() == MotionEvent.ACTION_UP ||
 		         event.getActionMasked() == MotionEvent.ACTION_POINTER_UP)
 		{
-			ArrayList<PointF> f = arrayToFingers(event);
+			ArrayList<PointF> f = extractFingers(event);
 			if (f.size() > 0)
 			{
-				PointF cen = getCenter(f);
-				posX = cen.x; posY = cen.y;
+				center = getCenter(f);
+				dispersion = getDispersion(f);
 			}
 			updateAsync();
 			return true;
 		}
 		else if (event.getActionMasked() == MotionEvent.ACTION_MOVE)
 		{
-			ArrayList<PointF> f = arrayToFingers(event);
-			PointF cen = getCenter(f);
+			ArrayList<PointF> f = extractFingers(event);
+			PointF newCenter = getCenter(f);
+			float newDispersion = getDispersion(f);
 
 			synchronized (this)
 			{
-				deltaX += cen.x - posX;
-				deltaY += cen.y - posY;
+				panDeltaX += newCenter.x - center.x;
+				panDeltaY += newCenter.y - center.y;
+				zoomDelta *= 1.0 + 0.006 * (newDispersion - dispersion);
 			}
 			
-			posX = cen.x; posY = cen.y;
+			center = newCenter;
+			dispersion = newDispersion;
 			
 			invalidate();
 			updateAsync();
