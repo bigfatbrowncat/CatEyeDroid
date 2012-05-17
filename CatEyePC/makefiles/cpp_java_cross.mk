@@ -18,7 +18,7 @@ TARGET_GEN = $(TARGET)/gen
 EXTERNAL_JARS = #$(shell find ../ExternalLibs/lib -name \*.jar -printf "%p;")
 
 JAVA_FILES := $(shell cd $(SOURCE); find . -name \*.java)
-CLASS_FILES = $(addprefix $(TARGET_BIN)/,$(addsuffix .class,$(basename $(JAVA_FILES))))
+CLASS_FILES = $(addprefix $(TARGET_BIN)/classes/,$(addsuffix .class,$(basename $(JAVA_FILES))))
                    
 JAVA_JNI_HEADERS = $(addprefix $(TARGET_GEN)/,$(addsuffix .h,$(subst .,/,$(JAVA_JNI_CLASSES))))
 JAVA_JNI_JAVA = $(addprefix $(SOURCE)/,$(addsuffix .java,$(subst .,/,$(JAVA_JNI_CLASSES))))
@@ -49,6 +49,7 @@ shared_lib: $(TARGET_BIN)/$(NATIVE_LIB)
 ################### Folders ###################
 
 ENSURE_BIN = if [ ! -d "$(TARGET_BIN)" ]; then mkdir -p "$(TARGET_BIN)"; fi
+ENSURE_CLASSES = if [ ! -d "$(TARGET_BIN)/classes" ]; then mkdir -p "$(TARGET_BIN)/classes"; fi
 ENSURE_GEN = if [ ! -d "$(TARGET_GEN)" ]; then mkdir -p "$(TARGET_GEN)"; fi
 ENSURE_OBJ = if [ ! -d "$(TARGET_OBJ)" ]; then mkdir -p "$(TARGET_OBJ)"; fi
 
@@ -56,19 +57,19 @@ ENSURE_OBJ = if [ ! -d "$(TARGET_OBJ)" ]; then mkdir -p "$(TARGET_OBJ)"; fi
 
 classes: $(CLASS_FILES)
 
-$(TARGET_BIN)/%.class : $(SOURCE)/%.java
+$(TARGET_BIN)/classes/%.class : $(SOURCE)/%.java
 	@echo "[$(PROJ)] Compiling java class $@ ..."
-	$(ENSURE_BIN)
+	$(ENSURE_CLASSES)
 	#@echo "Custom jars: $(CUSTOM_JARS)"
-	"$(JAVA_HOME)/bin/javac" -sourcepath "$(SOURCE)" -classpath "$(EXTERNAL_JARS);$(CUSTOM_JARS);$(TARGET_BIN)" -d "$(TARGET_BIN)" $<
+	"$(JAVA_HOME)/bin/javac" -sourcepath "$(SOURCE)" -classpath "$(EXTERNAL_JARS);$(CUSTOM_JARS);$(TARGET_BIN)/classes" -d "$(TARGET_BIN)/classes" $<
 
 ################# JNI Headers #################
 
-$(JAVA_JNI_HEADERS) : $(TARGET_GEN)/%.h : $(TARGET_BIN)/%.class
+$(JAVA_JNI_HEADERS) : $(TARGET_GEN)/%.h : $(TARGET_BIN)/classes/%.class
 	@echo "[$(PROJ)] Generating $@ ..."
 	$(ENSURE_GEN)
 	if [ ! -d "$(dir $@)" ]; then mkdir -p "$(dir $@)"; fi
-	"$(JAVA_HOME)/bin/javah" -classpath "$(EXTERNAL_JARS);$(CUSTOM_JARS);$(TARGET_BIN)" -o $@ $(subst /,.,$(basename $(patsubst $(TARGET_GEN)/%, %, $@)))
+	"$(JAVA_HOME)/bin/javah" -classpath "$(EXTERNAL_JARS);$(CUSTOM_JARS);$(TARGET_BIN)/classes" -o $@ $(subst /,.,$(basename $(patsubst $(TARGET_GEN)/%, %, $@)))
 
 ################### Objects ###################
 

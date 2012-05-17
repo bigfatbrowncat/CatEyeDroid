@@ -5,7 +5,7 @@ TARGET_BIN = $(TARGET)/bin
 EXTERNAL_JARS = #$(shell find ../ExternalLibs/lib -name \*.jar -printf "%p;")
 
 JAVA_FILES := $(shell cd $(SOURCE); find . -name \*.java)
-CLASS_FILES = $(addprefix $(TARGET_BIN)/,$(addsuffix .class,$(basename $(JAVA_FILES))))
+CLASS_FILES = $(addprefix $(TARGET_BIN)/classes/,$(addsuffix .class,$(basename $(JAVA_FILES))))
                    
 all: classes
 
@@ -19,17 +19,17 @@ clean:
 
 ################### Folders ###################
 
-ENSURE_BIN = if [ ! -d "$(TARGET_BIN)" ]; then mkdir -p "$(TARGET_BIN)"; fi
+ENSURE_CLASSES = if [ ! -d "$(TARGET_BIN)/classes" ]; then mkdir -p "$(TARGET_BIN)/classes"; fi
 
 ################ Java classes #################
 
 classes: $(CLASS_FILES)
 
-$(TARGET_BIN)/%.class : $(SOURCE)/%.java
+$(TARGET_BIN)/classes/%.class : $(SOURCE)/%.java
 	@echo "[$(PROJ)] Compiling java class $@ ..."
-	$(ENSURE_BIN)
+	$(ENSURE_CLASSES)
 	#@echo "Custom jars: $(CUSTOM_JARS)"
-	"$(JAVA_HOME)/bin/javac" -g -sourcepath "$(SOURCE)" -classpath "$(EXTERNAL_JARS);$(CUSTOM_JARS);$(TARGET_BIN)" -d "$(TARGET_BIN)" $<
+	"$(JAVA_HOME)/bin/javac" -g -sourcepath "$(SOURCE)" -classpath "$(EXTERNAL_JARS);$(CUSTOM_JARS);$(TARGET_BIN)/classes" -d "$(TARGET_BIN)/classes" $<
 
 .PHONY: all classes clean #deplibs 
 .SILENT:
