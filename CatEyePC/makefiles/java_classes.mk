@@ -7,8 +7,6 @@ EXTERNAL_JARS = #$(shell find ../ExternalLibs/lib -name \*.jar -printf "%p;")
 JAVA_FILES := $(shell cd $(SOURCE); find . -name \*.java)
 CLASS_FILES = $(addprefix $(TARGET_BIN)/classes/,$(addsuffix .class,$(basename $(JAVA_FILES))))
                    
-all: classes
-
 clean:
 	@echo "[$(PROJ)] Removing Java classes..."
 	rm -f $(foreach NAME, $(basename $(CLASS_FILES)), $(shell echo $(NAME)'\$$'\*.class))

@@ -19,6 +19,9 @@ SOURCE = src
 TARGET = ../CatEyePC
 JAVA_JNI_CLASSES = com.cateye.core.jni.PreciseBitmap \
                    com.cateye.core.jni.PreviewBitmap
-NATIVE_LIB = libCore.so
+NATIVE_LIB = Core.dll
+
+all: shared_lib classes headers
 
 include $(TARGET)/makefiles/cpp_java_cross.mk
+

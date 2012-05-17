@@ -7,11 +7,12 @@ EMBEDDED_TARGET_NAME = CatEye
 all: bitmaps raw jpeg8c core ui avian_embed
 
 clean:
-	rm -rf bin/embedded
 	make -C ../bitmaps clean
 	make -C ../libraw clean
 	make -C ../jpeg-8c clean
 	make -C ../CatEyeB.Core clean
+	rm -rf bin/embedded
+	rm -rf bin/classes
 
 bitmaps:
 	make -C ../bitmaps
@@ -35,6 +36,9 @@ avian_embed: ui
 	ar x ../../$(EXTERNAL)/lib/libavian.a; \
 	cp ../../$(EXTERNAL)/jar/classpath.jar boot.jar; \
 	"$(JAVA_HOME)/bin/jar" uvf boot.jar -C ../classes .; \
+	cd ..; \
+	"$(JAVA_HOME)/bin/jar" uvf embedded/boot.jar *.dll; \
+	cd embedded; \
 	../../$(EXTERNAL)/bin/binaryToObject boot.jar boot.jar.o _binary_boot_jar_start _binary_boot_jar_end $(PLATFORM) $(ARCH); \
 	g++ -I"$(JAVA_HOME)/include" -I"$(JAVA_HOME)/include/win32" \
      -D_JNI_IMPLEMENTATION_ -c ../../src/embedded-main.cpp -o embedded-main.o; \

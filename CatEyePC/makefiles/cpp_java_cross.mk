@@ -25,7 +25,7 @@ JAVA_JNI_JAVA = $(addprefix $(SOURCE)/,$(addsuffix .java,$(subst .,/,$(JAVA_JNI_
 JAVA_JNI_CPP = $(addprefix $(SOURCE)/,$(addsuffix .cpp,$(subst .,/,$(JAVA_JNI_CLASSES))))
 JAVA_JNI_OBJ = $(addprefix $(TARGET_OBJ)/,$(addsuffix .o,$(subst .,/,$(JAVA_JNI_CLASSES))))
 
-all: shared_lib classes $(JAVA_JNI_HEADERS)
+headers: $(JAVA_JNI_HEADERS)
 
 clean:
 	@echo "[$(PROJ)] Removing Java classes..."
