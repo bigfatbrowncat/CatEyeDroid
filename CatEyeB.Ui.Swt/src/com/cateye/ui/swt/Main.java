@@ -1,29 +1,35 @@
 package com.cateye.ui.swt;
 
 import org.eclipse.swt.widgets.Display;
-import org.eclipse.swt.widgets.Shell;
+
+import com.cateye.core.IPreciseBitmap;
+import com.cateye.core.Image;
+import com.cateye.core.jni.RawImageLoader;
 
 public class Main 
 {
+	private static RawImageLoader imageLoader = new RawImageLoader();
+
 	public static void main(String[] args)
 	{
-		System.out.println("CatEye started");
+		if (args.length == 0)
+			System.out.println("CatEye started without file");
+		else
+			System.out.println("CatEye started with " + args[0]);
+			
 		
 		Display display = new Display();
 		
-		Shell mainShell = new Shell(display);
-		mainShell.setText("CatEye");
-		mainShell.setSize(640, 480);
-		
-		mainShell.open();
-		
-		while (!mainShell.isDisposed())
+		IPreciseBitmap pbmp = null;
+		if (args.length > 0)
 		{
-			if (!display.readAndDispatch())
-			{
-				display.sleep();
-			}
+			Image img = imageLoader.loadImageFromFile(args[0]);
+			pbmp = img.getBitmap();
 		}
+		
+		MainWindow mainWindow = new MainWindow(pbmp);
+		
+		mainWindow.start();
 		
 		display.dispose();
 		

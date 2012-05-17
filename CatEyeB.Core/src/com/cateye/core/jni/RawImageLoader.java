@@ -114,7 +114,7 @@ public class RawImageLoader implements IImageLoader
 	
 	static
 	{
-		System.loadLibrary("RawImageLoader");
+		System.loadLibrary("Core");
 	}
 	
 }

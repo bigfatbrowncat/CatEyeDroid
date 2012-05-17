@@ -33,12 +33,16 @@ avian_embed: ui
 	# Here we implement the default Avian embedding procedure
 	mkdir -p bin/embedded; \
 	cd bin/embedded; \
+	echo "Unpacking libavian.a"; \
 	ar x ../../$(EXTERNAL)/lib/libavian.a; \
 	cp ../../$(EXTERNAL)/jar/classpath.jar boot.jar; \
+	echo "Moving dlls"; \
+	cd ../classes/; \
+	mv *.dll ../; \
+	cd ../embedded/; \
+	echo "Packing boot.jar"; \
 	"$(JAVA_HOME)/bin/jar" uvf boot.jar -C ../classes .; \
-	cd ..; \
-	"$(JAVA_HOME)/bin/jar" uvf embedded/boot.jar *.dll; \
-	cd embedded; \
+	echo "Converting boot.jar to object file"; \
 	../../$(EXTERNAL)/bin/binaryToObject boot.jar boot.jar.o _binary_boot_jar_start _binary_boot_jar_end $(PLATFORM) $(ARCH); \
 	g++ -I"$(JAVA_HOME)/include" -I"$(JAVA_HOME)/include/win32" \
      -D_JNI_IMPLEMENTATION_ -c ../../src/embedded-main.cpp -o embedded-main.o; \
@@ -46,6 +50,7 @@ avian_embed: ui
     dlltool -d $(EMBEDDED_TARGET_NAME).def -e $(EMBEDDED_TARGET_NAME).exp; \
     g++ $(EMBEDDED_TARGET_NAME).exp *.o -L../../$(EXTERNAL)/lib -lmingwthrd -lm -lz -lws2_32 \
      -mwindows -mconsole -static-libgcc -static-libstdc++ -o $(EMBEDDED_TARGET_NAME).exe; \
+    mv -f $(EMBEDDED_TARGET_NAME).exe ../
     #strip --strip-all $(EMBEDDED_TARGET_NAME).exe
 	
 .PHONY: all bitmaps raw jpeg8c core clean ui avian_embed

@@ -7,10 +7,17 @@
 #include <jni.h>
 #include <stdio.h>
 #include <malloc.h>
+
+#ifdef DROID
 #include <android/log.h>
+#endif
 
 //#define DEBUG_INFO	//printf("%d\n", __LINE__);fflush(stdout);
-#define DEBUG_INFO __android_log_print(ANDROID_LOG_INFO, "RawImageLoader", "At line %d", __LINE__);
+#ifdef DROID
+  #define DEBUG_INFO __android_log_print(ANDROID_LOG_INFO, "RawImageLoader", "At line %d", __LINE__);
+#else
+  #define DEBUG_INFO printf("RawImageLoader at line %d\n", __LINE__);
+#endif
 
 #define RAWPROCESSOR_OPEN_BUFFER			1024 * 1024 * 256		// 256Mb
 #define	MESSAGE_LIBRAW_OUT_OF_MEMORY		"Out of memory occured during libraw processing"
@@ -312,8 +319,10 @@ int my_raw_processing_callback(void *d, enum LibRaw_progress p, int iteration, i
 	DEBUG_INFO	jmethodID raiseProgress_id = oc->env->GetMethodID(cls, "raiseProgress", "(F)Z");
 	DEBUG_INFO	float progress = (float)((log((double)p)/log(2.0) + (float)iteration / expected) / log((double)LIBRAW_PROGRESS_STRETCH)/log(2.0));
 
+#ifdef DROID
 	__android_log_print(ANDROID_LOG_INFO, "RawImageLoader_my_raw_processing_callback", "progress = %d, iteration = %d, expected = %d", p, iteration, expected);
 	__android_log_print(ANDROID_LOG_INFO, "RawImageLoader_my_raw_processing_callback", "progress = %.1f", progress * 100);
+#endif
 
 	DEBUG_INFO	if (oc->env->CallBooleanMethod(oc->obj, raiseProgress_id, progress))
 	{
@@ -329,7 +338,9 @@ int my_raw_processing_callback(void *d, enum LibRaw_progress p, int iteration, i
 extern "C" JNIEXPORT jobject JNICALL Java_com_cateye_core_jni_RawImageLoader_loadPreciseBitmapFromFile
   (JNIEnv * env, jobject obj, jstring filename)
 {
+#ifdef DROID
 	__android_log_write(ANDROID_LOG_INFO, "RawImageLoader_loadPreciseBitmapFromFile", "Entering loadPreciseBitmapFromFile");
+#endif
 	jclass cls = env->GetObjectClass(obj);
 	DEBUG_INFO
 	jfieldID divide_by_2_id = env->GetFieldID(cls, "divideBy2", "Z");
@@ -338,13 +349,19 @@ extern "C" JNIEXPORT jobject JNICALL Java_com_cateye_core_jni_RawImageLoader_loa
 	DEBUG_INFO
 
 	// Creating Java PreciseBitmap object
+#ifdef DROID
 	__android_log_write(ANDROID_LOG_INFO, "RawImageLoader_loadPreciseBitmapFromFile", "Creating Java PreciseBitmap object");
+#endif
 	DEBUG_INFO
 	jclass preciseBitmap_class = env->FindClass("com/cateye/core/jni/PreciseBitmap");
+#ifdef DROID
 	__android_log_print(ANDROID_LOG_INFO, "RawImageLoader_loadPreciseBitmapFromFile", "preciseBitmap_class = %d", preciseBitmap_class);
+#endif
 	DEBUG_INFO
 	jmethodID preciseBitmap_init = env->GetMethodID(preciseBitmap_class, "<init>", "()V");
+#ifdef DROID
 	__android_log_print(ANDROID_LOG_INFO, "RawImageLoader_loadPreciseBitmapFromFile", "preciseBitmap_init = %d", preciseBitmap_init);
+#endif
 
 	DEBUG_INFO
 	jobject preciseBitmap = env->NewObject(preciseBitmap_class, preciseBitmap_init);
@@ -469,6 +486,8 @@ end:
 		throw_libraw_exception(env, ret);
 	}
 	DEBUG_INFO
+#ifdef DROID
 	__android_log_write(ANDROID_LOG_INFO, "RawImageLoader_loadPreciseBitmapFromFile", "Leaving loadPreciseBitmapFromFile");
+#endif
 	return preciseBitmap;
 }
