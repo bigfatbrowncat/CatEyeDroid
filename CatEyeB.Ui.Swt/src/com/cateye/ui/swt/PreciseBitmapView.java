@@ -22,6 +22,7 @@ public class PreciseBitmapView extends Canvas
 {
     private int[] pixels;
     private ImageData imgData; 
+    private Image img; 
 	private IPreciseBitmap preciseBitmap;
 
 	public void setPreciseBitmap(IPreciseBitmap value) 
@@ -30,31 +31,45 @@ public class PreciseBitmapView extends Canvas
 		if (preciseBitmap != null)
 		{
 			pixels = new int[preciseBitmap.getWidth() * preciseBitmap.getHeight()];
+			imgData = new ImageData(preciseBitmap.getWidth(), preciseBitmap.getHeight(), 24, new PaletteData(0xFF0000, 0x00FF00, 0x0000FF));
+			img = new Image(getDisplay(), imgData);
 		}
 		else
 		{
 			pixels = null;
+			imgData = null;
+			if (img != null)
+			{
+				img.dispose();
+				img = null;
+			}
 		}
+	}
+	
+	@Override
+	public void dispose() {
+		if (img != null) img.dispose();
+		super.dispose();
 	}
 	
 	public PreciseBitmapView(Composite parent)
 	{
 		super(parent, SWT.NO_BACKGROUND);
-		
+
 		addPaintListener(new PaintListener()
 		{
 			@Override
 			public void paintControl(PaintEvent e)
 			{
+				
 				if (preciseBitmap != null)
 				{
 					Rectangle rect = getClientArea();
 					rect.width = Math.min(rect.width, preciseBitmap.getWidth());
 					rect.height = Math.min(rect.height, preciseBitmap.getHeight());
 					
-					pixels = preciseBitmap.getPixels(pixels, 0, 0, rect.width, rect.height, 500, 0.5f);
+					pixels = preciseBitmap.getPixels(pixels, 0, 0, rect.width, rect.height, 500, 1f);
 					
-					imgData = new ImageData(rect.width, rect.height, 24, new PaletteData(0xFF0000, 0x00FF00, 0x0000FF));
 					for (int i = 0; i < rect.width; i++)
 					{
 						for (int j = 0; j < rect.height; j++)
@@ -63,11 +78,8 @@ public class PreciseBitmapView extends Canvas
 						}
 					}
 
-					Image img = new Image(e.display, imgData);
-
 					e.gc.drawImage(img, 0, 0);
 					
-					img.dispose();
 				}
 			}
 		});
