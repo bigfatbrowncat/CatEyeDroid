@@ -89,7 +89,7 @@ public class PreciseBitmapView extends View
 							panY -= deltaYOld;
 							
 							Bitmap newImage = Bitmap.createBitmap(bitmapWidth, bitmapHeight, Bitmap.Config.ARGB_8888);
-							pixels = preciseBitmap.getPixels(pixels, (int)(panX), (int)(panY), bitmapWidth, bitmapHeight, 1000, 0.5f);
+							pixels = preciseBitmap.getPixels(pixels, false, (int)(panX), (int)(panY), bitmapWidth, bitmapHeight, 1000, 0.5f);
 							if (newImage != null && !newImage.isRecycled() && pixels != null)
 							{
 								newImage.setPixels(pixels, 0, bitmapWidth, 0, 0, bitmapWidth, bitmapHeight);

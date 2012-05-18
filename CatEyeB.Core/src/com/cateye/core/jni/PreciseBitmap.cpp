@@ -156,7 +156,7 @@ extern "C" JNIEXPORT jobject JNICALL Java_com_cateye_core_jni_PreciseBitmap_clon
 }
 
 extern "C" JNIEXPORT jintArray JNICALL Java_com_cateye_core_jni_PreciseBitmap_getPixels
-	(JNIEnv * env, jobject obj, jintArray buf, jint x, jint y, jint screenWidth, jint screenHeight, jfloat brightness, jfloat scale)
+	(JNIEnv * env, jobject obj, jintArray buf, jboolean swapRB, jint x, jint y, jint screenWidth, jint screenHeight, jfloat brightness, jfloat scale)
 {
 	// Getting the class
 	jclass cls = env->GetObjectClass(obj);
@@ -205,18 +205,29 @@ extern "C" JNIEXPORT jintArray JNICALL Java_com_cateye_core_jni_PreciseBitmap_ge
    		}
    		else
    		{
-			int r = pbmp.r[srcy * pbmp.width + srcx] * brightness,
-				g = pbmp.g[srcy * pbmp.width + srcx] * brightness,
-				b = pbmp.b[srcy * pbmp.width + srcx] * brightness;
+   			int a, b, c;
 
-			if (r > 255) r = 255;
-			if (g > 255) g = 255;
+   			if (swapRB)
+   			{
+   				c = pbmp.r[srcy * pbmp.width + srcx] * brightness,
+   				b = pbmp.g[srcy * pbmp.width + srcx] * brightness,
+   				a = pbmp.b[srcy * pbmp.width + srcx] * brightness;
+   			}
+   			else
+   			{
+				a = pbmp.r[srcy * pbmp.width + srcx] * brightness,
+				b = pbmp.g[srcy * pbmp.width + srcx] * brightness,
+				c = pbmp.b[srcy * pbmp.width + srcx] * brightness;
+   			}
+
+			if (a > 255) a = 255;
 			if (b > 255) b = 255;
+			if (c > 255) c = 255;
 
-			pixels[j * screenWidth + i] = (0xff << 24) + (r << 16) + (g << 8) + b;
+			pixels[j * screenWidth + i] = (0xff << 24) + (a << 16) + (b << 8) + c;
    		}
    	}
-	env->ReleaseIntArrayElements(buf, pixels, JNI_COMMIT);
+	env->ReleaseIntArrayElements(buf, pixels, 0);
 
 	DEBUG_INFO
     return buf;
