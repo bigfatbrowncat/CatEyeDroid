@@ -53,7 +53,12 @@ public class ImageTransformer
 	
 	public void zoomUponPoint(PointD zoomCenter, double zoom)
 	{
-		
+		this.pan = new PointD(
+				pan.getX() * zoom + (1 - zoom) * (zoomCenter.getX() - 0.5 * screenSize.getX()), 
+				pan.getY() * zoom + (1 - zoom) * (zoomCenter.getY() - 0.5 * screenSize.getY())
+		);
+		this.zoom *= zoom;
+		updateMu();
 	}
 	
 	public void setScreenSize(PointD value)

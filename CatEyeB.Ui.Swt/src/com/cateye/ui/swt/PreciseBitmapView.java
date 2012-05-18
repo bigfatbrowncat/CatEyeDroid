@@ -40,12 +40,12 @@ public class PreciseBitmapView extends Canvas
 
 			if (preciseBitmap != null)
 			{
-				int screenWidth = PreciseBitmapView.this.getClientArea().width;
-				int screenHeight = PreciseBitmapView.this.getClientArea().height;
+				int viewWidth = PreciseBitmapView.this.getClientArea().width;
+				int viewHeight = PreciseBitmapView.this.getClientArea().height;
 
 				PointD lt = imageTransformer.screenToImage(new PointD(0, 0));
 				PointD rb = imageTransformer.screenToImage(
-						new PointD(screenWidth, screenHeight)
+						new PointD(viewWidth, viewHeight)
 				);
 				
 				System.out.println(lt + "; " + rb);
@@ -53,15 +53,15 @@ public class PreciseBitmapView extends Canvas
 				
 				cachePixels = preciseBitmap.getPixels(cachePixels, true, 
 						(int)lt.getX(), (int)lt.getY(), 
-						screenWidth, screenHeight, 
+						viewWidth, viewHeight, 
 						500, 
 						(float)(imageTransformer.getZoom()));
 				
-				for (int j = 0; j < screenHeight; j++)
+				for (int j = 0; j < viewHeight; j++)
 				{
-					for (int i = 0; i < screenWidth; i++)
+					for (int i = 0; i < viewWidth; i++)
 					{
-						imgData.setPixel(i, j, cachePixels[j * screenWidth + i]);
+						imgData.setPixel(i, j, cachePixels[j * viewWidth + i]);
 					}
 				}
 				
@@ -116,13 +116,11 @@ public class PreciseBitmapView extends Canvas
 		@Override
 		public void mouseScrolled(MouseEvent arg0) 
 		{
-			imageTransformer.multiplyZoom(Math.pow(3, (double)arg0.count / 50));
-			if (imageTransformer.getZoom() > 1.0)
-			{
-				imageTransformer.setZoom(1);
-			}
-			//imageTransformer.setZoom(0.5);
+			double dZoom = Math.pow(3, (double)arg0.count / 50);
+
+			dZoom = Math.min(dZoom, 1.0 / imageTransformer.getZoom());
 			
+			imageTransformer.zoomUponPoint(new PointD(arg0.x, arg0.y), dZoom);
 			
 			PreciseBitmapView.this.redraw();
 		}
