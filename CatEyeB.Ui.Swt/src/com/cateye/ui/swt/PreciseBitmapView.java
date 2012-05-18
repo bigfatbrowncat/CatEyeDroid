@@ -40,26 +40,30 @@ public class PreciseBitmapView extends Canvas
 
 			if (preciseBitmap != null)
 			{
+				int screenWidth = PreciseBitmapView.this.getClientArea().width;
+				int screenHeight = PreciseBitmapView.this.getClientArea().height;
+
 				PointD lt = imageTransformer.screenToImage(new PointD(0, 0));
 				PointD rb = imageTransformer.screenToImage(
-						new PointD(PreciseBitmapView.this.getClientArea().width, 
-						           PreciseBitmapView.this.getClientArea().height)
+						new PointD(screenWidth, screenHeight)
 				);
 				
-				int cacheWidth = (int)(rb.getX() - lt.getX());
-				int cacheHeight = (int)(rb.getY() - lt.getY());
+				System.out.println(lt + "; " + rb);
+				
 				
 				cachePixels = preciseBitmap.getPixels(cachePixels, true, 
 						(int)lt.getX(), (int)lt.getY(), 
-						cacheWidth, cacheHeight, 
+						screenWidth, screenHeight, 
 						500, 
-						(float)(imageTransformer.getZoom()));
+						(float)(1.0f / imageTransformer.getZoom()));
 				
-				for (int j = 0; j < cacheHeight; j++)
+				
+				
+				for (int j = 0; j < screenHeight; j++)
 				{
-					for (int i = 0; i < cacheWidth; i++)
+					for (int i = 0; i < screenWidth; i++)
 					{
-						imgData.setPixel(i, j, cachePixels[j * imgData.width + i]);
+						imgData.setPixel(i, j, cachePixels[j * screenWidth + i]);
 					}
 				}
 				
@@ -112,9 +116,17 @@ public class PreciseBitmapView extends Canvas
 	MouseWheelListener mouseWheelListener = new MouseWheelListener() {
 		
 		@Override
-		public void mouseScrolled(MouseEvent arg0) {
-			// TODO Auto-generated method stub
+		public void mouseScrolled(MouseEvent arg0) 
+		{
+			imageTransformer.multiplyZoom(Math.pow(3, (double)arg0.count / 50));
+			if (imageTransformer.getZoom() < 1.0)
+			{
+				imageTransformer.setZoom(1);
+			}
+			//imageTransformer.setZoom(0.5);
 			
+			
+			PreciseBitmapView.this.redraw();
 		}
 	};
 	

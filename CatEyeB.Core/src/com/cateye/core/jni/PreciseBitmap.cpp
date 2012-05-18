@@ -196,8 +196,8 @@ extern "C" JNIEXPORT jintArray JNICALL Java_com_cateye_core_jni_PreciseBitmap_ge
     for (int j = 0; j < screenHeight; j++)
    	for (int i = 0; i < screenWidth; i++)
    	{
-   		int srcx = (i + x) / scale;
-   		int srcy = (j + y) / scale;
+   		int srcx = (int)((double)i / scale + x);
+   		int srcy = (int)((double)j / scale + y);
 
    		if (srcx < 0 || srcy < 0 || srcx >= pbmp.width || srcy >= pbmp.height)
    		{

@@ -17,4 +17,10 @@ public class PointD
 	{
 		return y;
 	}
+	
+	@Override
+	public String toString() 
+	{
+		return "(" + x + ", " + y + ")";
+	}
 }

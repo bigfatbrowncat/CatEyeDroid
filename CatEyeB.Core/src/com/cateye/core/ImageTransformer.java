@@ -10,6 +10,7 @@ public class ImageTransformer
 	{
 		mu = new PointD((imageSize.getX() - zoom * screenSize.getX()) / 2 - zoom * pan.getX(),
 						(imageSize.getY() - zoom * screenSize.getY()) / 2 - zoom * pan.getY());
+		System.out.println("mu = " + mu);
 	}
 	
 	public ImageTransformer()
@@ -41,8 +42,13 @@ public class ImageTransformer
 
 	public PointD screenToImage(PointD r)
 	{
-		return new PointD(r.getX() / zoom + mu.getX(),
-		                  r.getY() / zoom + mu.getY());
+		double x = r.getX() / zoom + mu.getX();
+		double y = r.getY() / zoom + mu.getY();
+		
+		/*x = Math.min(Math.max(0, x), imageSize.getX());
+		y = Math.min(Math.max(0, y), imageSize.getY());*/
+		
+		return new PointD(x, y);
 	}
 	
 	public void setScreenSize(PointD value)
