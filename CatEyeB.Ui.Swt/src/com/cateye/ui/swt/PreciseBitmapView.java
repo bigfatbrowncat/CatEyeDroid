@@ -55,9 +55,7 @@ public class PreciseBitmapView extends Canvas
 						(int)lt.getX(), (int)lt.getY(), 
 						screenWidth, screenHeight, 
 						500, 
-						(float)(1.0f / imageTransformer.getZoom()));
-				
-				
+						(float)(imageTransformer.getZoom()));
 				
 				for (int j = 0; j < screenHeight; j++)
 				{
@@ -119,7 +117,7 @@ public class PreciseBitmapView extends Canvas
 		public void mouseScrolled(MouseEvent arg0) 
 		{
 			imageTransformer.multiplyZoom(Math.pow(3, (double)arg0.count / 50));
-			if (imageTransformer.getZoom() < 1.0)
+			if (imageTransformer.getZoom() > 1.0)
 			{
 				imageTransformer.setZoom(1);
 			}
