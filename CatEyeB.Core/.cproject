@@ -31,6 +31,8 @@
 									<listOptionValue builtIn="false" value="&quot;${env_var:JAVA_HOME}/include&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${env_var:JAVA_HOME}/include/win32&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/bitmaps/include}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/libraw/libraw}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/jpeg-8c/include}&quot;"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.assembler.input.1264524465" superClass="cdt.managedbuild.tool.gnu.assembler.input"/>
 							</tool>
@@ -41,6 +43,8 @@
 									<listOptionValue builtIn="false" value="&quot;${env_var:JAVA_HOME}/include&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${env_var:JAVA_HOME}/include/win32&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/bitmaps/include}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/libraw/libraw}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/jpeg-8c/include}&quot;"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.476828598" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 							</tool>
@@ -50,6 +54,8 @@
 									<listOptionValue builtIn="false" value="&quot;${env_var:JAVA_HOME}/include&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${env_var:JAVA_HOME}/include/win32&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/bitmaps/include}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/libraw/libraw}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/jpeg-8c/include}&quot;"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.732150293" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
 							</tool>

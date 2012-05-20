@@ -1,81 +1,119 @@
 package com.cateye.ui.swt;
 
-import java.awt.Composite;
-
-import org.eclipse.swt.graphics.ImageLoader;
+import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.MouseEvent;
+import org.eclipse.swt.events.MouseTrackListener;
+import org.eclipse.swt.events.MouseWheelListener;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 
 import com.cateye.core.IPreciseBitmap;
+import com.cateye.core.IProgressListener;
+import com.cateye.core.Image;
+import com.cateye.core.jni.RawImageLoader;
+import com.cateye.ui.swt.MainComposite.ActiveScreen;
 
-public class MainWindow
+public class MainWindow extends Shell
 {
-	private Shell shell;
-	private FillLayout mainLayout;
-	private PreciseBitmapView mainView;
+	private Image image;
+	private MainComposite mainComposite;
+	private String filename;
+	private static RawImageLoader imageLoader = new RawImageLoader();
 	
-	private void prepareContent(IPreciseBitmap pbmp)
+	Runnable loaderRunnable = new Runnable()
 	{
-		shell.setText("CatEye");
-		shell.setSize(640, 480);
+		@Override
+		public void run() 
+		{
+			// Loading the image into view
+			image = imageLoader.loadImageFromFile(filename);
+			final IPreciseBitmap pb = image.getBitmap();
+			
+			getDisplay().syncExec(new Runnable() {
+				
+				@Override
+				public void run() 
+				{
+					mainComposite.getPreciseBitmapView().setPreciseBitmap(pb);
+					mainComposite.setActiveScreen(ActiveScreen.View);
+				}
+				
+			});
+		}
+	};
+	
+	IProgressListener loadingProgressListener = new IProgressListener()
+	{
+		@Override
+		public boolean invoke(Object sender, final float progress) {
+			getDisplay().syncExec(new Runnable() {
+
+				@Override
+				public void run() 
+				{
+					mainComposite.getLoadingScreen().setProgress((int)(progress * 100));
+				}
+
+			});
+			
+			return true;
+		}
+	};
+	
+	private void prepareContent()
+	{
+		setText("CatEye");
+		setSize(640, 480);
 		
-		mainLayout = new FillLayout();
-		shell.setLayout(mainLayout);
+		setLayout(new FillLayout());
 		
-		mainView = new PreciseBitmapView(shell);
-		
-		mainView.setPreciseBitmap(pbmp);
+		mainComposite = new MainComposite(this, SWT.NONE);
+		mainComposite.setActiveScreen(ActiveScreen.Loading);
+	
+		imageLoader.addProgressListener(loadingProgressListener);
 	}
 	
-	public void start()
+	protected void setFilename(String filename)
 	{
-		shell.open();
+		// Setting filename
+		this.filename = filename;
 		
-		while (!shell.isDisposed())
+		// Cutting the path away
+		int n = filename.lastIndexOf('\\');
+		String fnp = filename.substring(n + 1);
+		n = filename.lastIndexOf('/');
+		fnp = fnp.substring(n + 1);
+		
+		mainComposite.getLoadingScreen().setFilename(fnp);
+		
+	}
+	
+	public void startWithFile(String filename)
+	{
+		setFilename(filename);
+		
+		open();
+		new Thread(loaderRunnable).start();
+		
+		while (!isDisposed())
 		{
-			if (!shell.getDisplay().readAndDispatch())
+			if (!getDisplay().readAndDispatch())
 			{
-				shell.getDisplay().sleep();
+				getDisplay().sleep();
 			}
 		}
 	}
 	
-	public MainWindow(IPreciseBitmap pbmp) 
+	public MainWindow() 
 	{
-		shell = new Shell();
-		prepareContent(pbmp);
-	}
-
-	public MainWindow(Display arg0, int arg1, IPreciseBitmap pbmp) 
-	{
-		shell = new Shell(arg0, arg1);
-		prepareContent(pbmp);
-	}
-
-	public MainWindow(Display arg0, IPreciseBitmap pbmp) 
-	{
-		shell = new Shell(arg0);
-		prepareContent(pbmp);
-	}
-
-	public MainWindow(int arg0, IPreciseBitmap pbmp) 
-	{
-		shell = new Shell(arg0);
-		prepareContent(pbmp);
-	}
-
-	public MainWindow(Shell arg0, int arg1, IPreciseBitmap pbmp) 
-	{
-		shell = new Shell(arg0, arg1);
-		prepareContent(pbmp);
-	}
-
-	public MainWindow(Shell arg0, IPreciseBitmap pbmp)
-	{
-		shell = new Shell(arg0);
-		prepareContent(pbmp);
+		prepareContent();
 	}
 	
-	
+	@Override
+	protected void checkSubclass() 
+	{
+		// Disable the check that prevents subclassing of SWT components
+	}
+
 }

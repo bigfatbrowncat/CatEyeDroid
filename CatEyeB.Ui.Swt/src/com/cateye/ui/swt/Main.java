@@ -1,37 +1,30 @@
 package com.cateye.ui.swt;
 
-import org.eclipse.swt.widgets.Display;
-
-import com.cateye.core.IPreciseBitmap;
-import com.cateye.core.Image;
-import com.cateye.core.jni.RawImageLoader;
+import org.eclipse.swt.SWT;
+import org.eclipse.swt.widgets.MessageBox;
 
 public class Main 
 {
-	private static RawImageLoader imageLoader = new RawImageLoader();
-
 	public static void main(String[] args)
 	{
+		MainWindow mainWindow = new MainWindow();
+		
 		if (args.length == 0)
-			System.out.println("CatEye started without file");
-		else
-			System.out.println("CatEye started with " + args[0]);
-			
-		
-		Display display = new Display();
-		
-		IPreciseBitmap pbmp = null;
-		if (args.length > 0)
 		{
-			Image img = imageLoader.loadImageFromFile(args[0]);
-			pbmp = img.getBitmap();
+			System.out.println("CatEye started without a file");
+			
+			// Showing error
+			MessageBox noFileMessageBox = new MessageBox(mainWindow, SWT.ICON_WARNING);
+			noFileMessageBox.setText("CatEye");
+			noFileMessageBox.setMessage("No filename specified in the command line. CatEye should be started with an image file.");
+			
+			noFileMessageBox.open();
 		}
-		
-		MainWindow mainWindow = new MainWindow(pbmp);
-		
-		mainWindow.start();
-		
-		display.dispose();
+		else
+		{
+			System.out.println("CatEye started with file " + args[0]);
+			mainWindow.startWithFile(args[0]);
+		}
 		
 		System.out.println("CatEye finished");
 	}

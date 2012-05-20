@@ -12,12 +12,14 @@
 #include <android/log.h>
 #endif
 
-//#define DEBUG_INFO	//printf("%d\n", __LINE__);fflush(stdout);
+#define DEBUG_INFO
+/*
 #ifdef DROID
   #define DEBUG_INFO __android_log_print(ANDROID_LOG_INFO, "RawImageLoader", "At line %d", __LINE__);
 #else
   #define DEBUG_INFO printf("RawImageLoader at line %d\n", __LINE__);
 #endif
+*/
 
 #define RAWPROCESSOR_OPEN_BUFFER			1024 * 1024 * 256		// 256Mb
 #define	MESSAGE_LIBRAW_OUT_OF_MEMORY		"Out of memory occured during libraw processing"
@@ -314,23 +316,30 @@ struct JNIObjectContext
 
 int my_raw_processing_callback(void *d, enum LibRaw_progress p, int iteration, int expected)
 {
-	DEBUG_INFO	JNIObjectContext* oc = (JNIObjectContext*)d;
-	DEBUG_INFO	jclass cls = oc->env->GetObjectClass(oc->obj);
-	DEBUG_INFO	jmethodID raiseProgress_id = oc->env->GetMethodID(cls, "raiseProgress", "(F)Z");
-	DEBUG_INFO	float progress = (float)((log((double)p)/log(2.0) + (float)iteration / expected) / log((double)LIBRAW_PROGRESS_STRETCH)/log(2.0));
+	JNIObjectContext* oc = (JNIObjectContext*)d;
+	jclass cls = oc->env->GetObjectClass(oc->obj);
+	jmethodID raiseProgress_id = oc->env->GetMethodID(cls, "raiseProgress", "(F)Z");
+
+	double logp = log((double)p)/log(2.0);
+	double logmax = log((double)LIBRAW_PROGRESS_STRETCH)/log(2.0);
+
+	float progress = (float)(logp / logmax);
 
 #ifdef DROID
-	__android_log_print(ANDROID_LOG_INFO, "RawImageLoader_my_raw_processing_callback", "progress = %d, iteration = %d, expected = %d", p, iteration, expected);
+	__android_log_print(ANDROID_LOG_INFO, "RawImageLoader_my_raw_processing_callback", "progress = %d, iteration = %d, expected = %d, progress = %.1f", p, iteration, expected, progress);
 	__android_log_print(ANDROID_LOG_INFO, "RawImageLoader_my_raw_processing_callback", "progress = %.1f", progress * 100);
+#else
+	printf("RawImageLoader_my_raw_processing_callback: progress = %d, iteration = %d, expected = %d, progress = %.1f\n", p, iteration, expected, progress);
+	fflush(stdout);
 #endif
 
-	DEBUG_INFO	if (oc->env->CallBooleanMethod(oc->obj, raiseProgress_id, progress))
+	if (oc->env->CallBooleanMethod(oc->obj, raiseProgress_id, progress))
 	{
-		DEBUG_INFO    	return 0;	// Continue
+		return 0;	// Continue
 	}
     else
     {
-    	DEBUG_INFO    	return 1;	// Cancel
+    	return 1;	// Cancel
     }
 
 }

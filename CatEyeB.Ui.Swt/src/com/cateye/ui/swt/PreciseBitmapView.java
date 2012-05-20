@@ -3,6 +3,8 @@ package com.cateye.ui.swt;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.ControlEvent;
 import org.eclipse.swt.events.ControlListener;
+import org.eclipse.swt.events.FocusEvent;
+import org.eclipse.swt.events.FocusListener;
 import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.events.MouseListener;
 import org.eclipse.swt.events.MouseMoveListener;
@@ -15,13 +17,18 @@ import org.eclipse.swt.graphics.PaletteData;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.widgets.Canvas;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.Event;
+import org.eclipse.swt.widgets.Listener;
 
 import com.cateye.core.IPreciseBitmap;
 import com.cateye.core.ImageTransformer;
 import com.cateye.core.PointD;
 
-public class PreciseBitmapView extends Canvas
+public class PreciseBitmapView extends Composite
 {
+	
     private int[] cachePixels = new int[getDisplay().getClientArea().width * getDisplay().getClientArea().height];
 
     private ImageData imgData; 
@@ -47,9 +54,6 @@ public class PreciseBitmapView extends Canvas
 				PointD rb = imageTransformer.screenToImage(
 						new PointD(viewWidth, viewHeight)
 				);
-				
-				System.out.println(lt + "; " + rb);
-				
 				
 				cachePixels = preciseBitmap.getPixels(cachePixels, true, 
 						(int)lt.getX(), (int)lt.getY(), 
@@ -111,15 +115,13 @@ public class PreciseBitmapView extends Canvas
 		}
 	};
 	
-	MouseWheelListener mouseWheelListener = new MouseWheelListener() {
+	Listener mouseWheelListener = new Listener() {
 		
 		@Override
-		public void mouseScrolled(MouseEvent arg0) 
+		public void handleEvent(Event arg0) 
 		{
 			double dZoom = Math.pow(3, (double)arg0.count / 50);
-
 			dZoom = Math.min(dZoom, 1.0 / imageTransformer.getZoom());
-			
 			imageTransformer.zoomUponPoint(new PointD(arg0.x, arg0.y), dZoom);
 			
 			PreciseBitmapView.this.redraw();
@@ -186,8 +188,18 @@ public class PreciseBitmapView extends Canvas
 		addPaintListener(paintListener);
 		addMouseListener(mouseListener);
 		addMouseMoveListener(mouseMoveListener);
-		addMouseWheelListener(mouseWheelListener);
+		//addMouseWheelListener(mouseWheelListener);
 		addControlListener(controlListener);
+
+		getDisplay().addFilter(SWT.MouseWheel, mouseWheelListener);		
+		
+		
+	}
+	
+	@Override
+	public void dispose() {
+		getDisplay().removeFilter(SWT.MouseWheel, mouseWheelListener);
+		super.dispose();
 	}
 
 }

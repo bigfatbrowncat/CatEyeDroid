@@ -41,7 +41,7 @@ avian_embed: ui
 	mv *.dll ../; \
 	cd ../embedded/; \
 	echo "Packing boot.jar"; \
-	"$(JAVA_HOME)/bin/jar" uvf boot.jar -C ../classes .; \
+	"$(JAVA_HOME)/bin/jar" uf boot.jar -C ../classes .; \
 	echo "Converting boot.jar to object file"; \
 	../../$(EXTERNAL)/bin/binaryToObject boot.jar boot.jar.o _binary_boot_jar_start _binary_boot_jar_end $(PLATFORM) $(ARCH); \
 	g++ -I"$(JAVA_HOME)/include" -I"$(JAVA_HOME)/include/win32" \
