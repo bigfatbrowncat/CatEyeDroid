@@ -28,17 +28,6 @@ public class MainComposite extends Composite
 		
 		loadingScreen = new LoadingScreenComposite(this, SWT.NONE);
 		preciseBitmapView = new PreciseBitmapView(this);
-		
-//		getDisplay().addFilter(SWT.MouseWheel, new Listener() {
-//			
-//			@Override
-//			public void handleEvent(Event arg0) {
-//				System.out.print("Wheel! " + arg0.count);
-//				
-//				
-//			}
-//		});
-
 	}
 
 	public void setActiveScreen(ActiveScreen value)
@@ -49,11 +38,9 @@ public class MainComposite extends Composite
 		{
 		case Loading:
 			mainStackLayout.topControl = loadingScreen;
-			System.out.println(loadingScreen.forceFocus());
 			break;
 		case View:
 			mainStackLayout.topControl = preciseBitmapView;
-			System.out.println(preciseBitmapView.forceFocus());
 			break;
 		default:
 			throw new RuntimeException("Strange case");

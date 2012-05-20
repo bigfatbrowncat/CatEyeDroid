@@ -155,8 +155,8 @@ extern "C" JNIEXPORT jobject JNICALL Java_com_cateye_core_jni_PreciseBitmap_clon
 	}
 }
 
-extern "C" JNIEXPORT jintArray JNICALL Java_com_cateye_core_jni_PreciseBitmap_getPixels
-	(JNIEnv * env, jobject obj, jintArray buf, jboolean swapRB, jint x, jint y, jint screenWidth, jint screenHeight, jfloat brightness, jfloat scale)
+extern "C" JNIEXPORT jintArray JNICALL Java_com_cateye_core_jni_PreciseBitmap_getPixelsBGRIntoIntBuffer
+	(JNIEnv * env, jobject obj, jintArray buf, jint x, jint y, jint screenWidth, jint screenHeight, jfloat brightness, jfloat scale)
 {
 	// Getting the class
 	jclass cls = env->GetObjectClass(obj);
@@ -205,30 +205,91 @@ extern "C" JNIEXPORT jintArray JNICALL Java_com_cateye_core_jni_PreciseBitmap_ge
    		}
    		else
    		{
-   			int a, b, c;
+   			int r, g, b;
 
-   			if (swapRB)
-   			{
-   				c = pbmp.r[srcy * pbmp.width + srcx] * brightness,
-   				b = pbmp.g[srcy * pbmp.width + srcx] * brightness,
-   				a = pbmp.b[srcy * pbmp.width + srcx] * brightness;
-   			}
-   			else
-   			{
-				a = pbmp.r[srcy * pbmp.width + srcx] * brightness,
-				b = pbmp.g[srcy * pbmp.width + srcx] * brightness,
-				c = pbmp.b[srcy * pbmp.width + srcx] * brightness;
-   			}
+			r = pbmp.r[srcy * pbmp.width + srcx] * brightness,
+			g = pbmp.g[srcy * pbmp.width + srcx] * brightness,
+			b = pbmp.b[srcy * pbmp.width + srcx] * brightness;
 
-			if (a > 255) a = 255;
+			if (r > 255) r = 255;
+			if (g > 255) g = 255;
 			if (b > 255) b = 255;
-			if (c > 255) c = 255;
 
-			pixels[j * screenWidth + i] = (0xff << 24) + (a << 16) + (b << 8) + c;
+			pixels[j * screenWidth + i] = (0xff << 24) + (r << 16) + (g << 8) + b;
    		}
    	}
 	env->ReleaseIntArrayElements(buf, pixels, 0);
 
 	DEBUG_INFO
     return buf;
+}
+
+extern "C" JNIEXPORT void JNICALL Java_com_cateye_core_jni_PreciseBitmap_getPixelsRGBIntoByteBuffer
+	(JNIEnv * env, jobject obj, jbyteArray buf, jint bytesPerLine, jint x, jint y, jint screenWidth, jint screenHeight, jfloat brightness, jfloat scale)
+{
+	// Getting the class
+	jclass cls = env->GetObjectClass(obj);
+	DEBUG_INFO
+	jclass exception_cls;
+
+	DEBUG_INFO
+
+	// Getting field ids
+	jfieldID r_id, g_id, b_id, width_id, height_id;
+	r_id = env->GetFieldID(cls, "r", "J");
+	g_id = env->GetFieldID(cls, "g", "J");
+	b_id = env->GetFieldID(cls, "b", "J");
+	width_id = env->GetFieldID(cls, "width", "I");
+	height_id = env->GetFieldID(cls, "height", "I");
+
+	DEBUG_INFO
+
+	// Getting the bitmap from JVM
+	PreciseBitmap pbmp;
+	pbmp.r = (float*)env->GetLongField(obj, r_id);
+	pbmp.g = (float*)env->GetLongField(obj, g_id);
+	pbmp.b = (float*)env->GetLongField(obj, b_id);
+	pbmp.width = env->GetIntField(obj, width_id);
+	pbmp.height = env->GetIntField(obj, height_id);
+
+	DEBUG_INFO
+
+	jbyte* pixels = env->GetByteArrayElements(buf, 0);
+
+	DEBUG_INFO
+
+	int delta = 0;
+    for (int j = 0; j < screenHeight; j++)
+    {
+		for (int i = 0; i < screenWidth; i++)
+		{
+			int srcx = (int)((double)i / scale + x);
+			int srcy = (int)((double)j / scale + y);
+
+			if (srcx < 0 || srcy < 0 || srcx >= pbmp.width || srcy >= pbmp.height)
+			{
+				pixels[delta + i * 3 + 0] = 0;
+				pixels[delta + i * 3 + 1] = 0;
+				pixels[delta + i * 3 + 2] = 0;
+			}
+			else
+			{
+				int r, g, b;
+
+				r = pbmp.r[srcy * pbmp.width + srcx] * brightness,
+				g = pbmp.g[srcy * pbmp.width + srcx] * brightness,
+				b = pbmp.b[srcy * pbmp.width + srcx] * brightness;
+
+				if (r > 255) r = 255;
+				if (g > 255) g = 255;
+				if (b > 255) b = 255;
+
+				pixels[delta + i * 3 + 0] = b;
+				pixels[delta + i * 3 + 1] = g;
+				pixels[delta + i * 3 + 2] = r;
+			}
+		}
+		delta += bytesPerLine;
+    }
+	env->ReleaseByteArrayElements(buf, pixels, 0);
 }

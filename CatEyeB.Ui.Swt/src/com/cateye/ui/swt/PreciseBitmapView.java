@@ -55,12 +55,13 @@ public class PreciseBitmapView extends Composite
 						new PointD(viewWidth, viewHeight)
 				);
 				
-				cachePixels = preciseBitmap.getPixels(cachePixels, true, 
+				preciseBitmap.getPixelsRGBIntoByteBuffer(imgData.data, imgData.bytesPerLine,
 						(int)lt.getX(), (int)lt.getY(), 
 						viewWidth, viewHeight, 
 						500, 
 						(float)(imageTransformer.getZoom()));
 				
+				/* That works, but slooooow
 				for (int j = 0; j < viewHeight; j++)
 				{
 					for (int i = 0; i < viewWidth; i++)
@@ -68,6 +69,21 @@ public class PreciseBitmapView extends Composite
 						imgData.setPixel(i, j, cachePixels[j * viewWidth + i]);
 					}
 				}
+				*/
+				
+				/*
+				for (int j = 0; j < viewHeight; j++)
+				{
+					for (int i = 0; i < viewWidth; i++)
+					{
+						int b = (cachePixels[j * viewWidth + i] >> 16) & 0xFF;
+						int g = (cachePixels[j * viewWidth + i] >> 8) & 0xFF;
+						int r = (cachePixels[j * viewWidth + i] >> 0) & 0xFF;
+						imgData.data[(j * viewWidth + i) * 3 + 0] = (byte)b;
+						imgData.data[(j * viewWidth + i) * 3 + 1] = (byte)g;
+						imgData.data[(j * viewWidth + i) * 3 + 2] = (byte)r;
+					}				
+				}*/
 				
 				Image img = new Image(getDisplay(), imgData);
 				e.gc.drawImage(img, 0, 0);
@@ -188,7 +204,6 @@ public class PreciseBitmapView extends Composite
 		addPaintListener(paintListener);
 		addMouseListener(mouseListener);
 		addMouseMoveListener(mouseMoveListener);
-		//addMouseWheelListener(mouseWheelListener);
 		addControlListener(controlListener);
 
 		getDisplay().addFilter(SWT.MouseWheel, mouseWheelListener);		

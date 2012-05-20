@@ -24,8 +24,9 @@ public interface IPreciseBitmap
 	 * it will be allocated automatically.
 	 * Returns buf (or newly allocated buffer)
 	 */
-	public int[] getPixels(int[] buf, boolean swapRB, int x, int y, int screenWidth, int screenHeight, float brightness, float scale);
-
+	int[] getPixelsBGRIntoIntBuffer(int[] buf, int x, int y, int screenWidth, int screenHeight, float brightness, float scale);
+	void getPixelsRGBIntoByteBuffer(byte[] buf, int bytesPerLine, int x, int y, int screenWidth, int screenHeight, float brightness, float scale);
+	
 	/**
 	 * Creates a clone of the bitmap
 	 */
