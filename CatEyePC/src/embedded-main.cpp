@@ -1,6 +1,9 @@
 #include "stdint.h"
 #include "jni.h"
 
+#include <windows.h>
+#include <locale.h>
+
 #if (defined __MINGW32__) || (defined _MSC_VER)
 #  define EXPORT __declspec(dllexport)
 #else
@@ -14,63 +17,73 @@
 #  define SYMBOL(x) _binary_boot_jar_##x
 #endif
 
-extern "C" {
+extern "C"
+{
 
-  extern const uint8_t SYMBOL(start)[];
-  extern const uint8_t SYMBOL(end)[];
+	extern const uint8_t SYMBOL(start)[];
+	extern const uint8_t SYMBOL(end)[];
 
-  EXPORT const uint8_t*
-  bootJar(unsigned* size)
-  {
-    *size = SYMBOL(end) - SYMBOL(start);
-    return SYMBOL(start);
-  }
+	EXPORT const uint8_t*
+	bootJar(unsigned* size)
+	{
+		*size = SYMBOL(end) - SYMBOL(start);
+		return SYMBOL(start);
+	}
 
 } // extern "C"
 
-int
-main(int ac, const char** av)
+int main(int argc, const char** argv)
 {
-  JavaVMInitArgs vmArgs;
-  vmArgs.version = JNI_VERSION_1_2;
-  vmArgs.nOptions = 1;
-  vmArgs.ignoreUnrecognized = JNI_TRUE;
+	// Getting command line as a wide string
+	int wac = 0;
+	wchar_t** wav;
+	wav = CommandLineToArgvW (GetCommandLineW(), &wac);
 
-  JavaVMOption options[vmArgs.nOptions];
-  vmArgs.options = options;
+	JavaVMInitArgs vmArgs;
+	vmArgs.version = JNI_VERSION_1_2;
+	vmArgs.nOptions = 1;
+	vmArgs.ignoreUnrecognized = JNI_TRUE;
 
-  options[0].optionString = const_cast<char*>("-Xbootclasspath:[bootJar]");
+	JavaVMOption options[vmArgs.nOptions];
+	vmArgs.options = options;
 
-  JavaVM* vm;
-  void* env;
-  JNI_CreateJavaVM(&vm, &env, &vmArgs);
-  JNIEnv* e = static_cast<JNIEnv*>(env);
+	options[0].optionString = const_cast<char*>("-Xbootclasspath:[bootJar]");
 
-  jclass c = e->FindClass("com/cateye/ui/swt/Main");
-  if (not e->ExceptionCheck()) {
-    jmethodID m = e->GetStaticMethodID(c, "main", "([Ljava/lang/String;)V");
-    if (not e->ExceptionCheck()) {
-      jclass stringClass = e->FindClass("java/lang/String");
-      if (not e->ExceptionCheck()) {
-        jobjectArray a = e->NewObjectArray(ac-1, stringClass, 0);
-        if (not e->ExceptionCheck()) {
-          for (int i = 1; i < ac; ++i) {
-            e->SetObjectArrayElement(a, i-1, e->NewStringUTF(av[i]));
-          }
+	JavaVM* vm;
+	void* env;
+	JNI_CreateJavaVM(&vm, &env, &vmArgs);
+	JNIEnv* e = static_cast<JNIEnv*>(env);
 
-          e->CallStaticVoidMethod(c, m, a);
-        }
-      }
-    }
-  }
+	jclass c = e->FindClass("com/cateye/ui/swt/Main");
+	if (not e->ExceptionCheck())
+	{
+		jmethodID m = e->GetStaticMethodID(c, "main", "([Ljava/lang/String;)V");
+		if (not e->ExceptionCheck())
+		{
+			jclass stringClass = e->FindClass("java/lang/String");
+			if (not e->ExceptionCheck())
+			{
+				jobjectArray a = e->NewObjectArray(wac - 1, stringClass, 0);
+				if (not e->ExceptionCheck())
+				{
+					for (int i = 1; i < wac; ++i)
+					{
+						e->SetObjectArrayElement(a, i - 1, e->NewString((jchar*)(wav[i]), wcslen(wav[i])));
+					}
 
-  int exitCode = 0;
-  if (e->ExceptionCheck()) {
-    exitCode = -1;
-    e->ExceptionDescribe();
-  }
+					e->CallStaticVoidMethod(c, m, a);
+				}
+			}
+		}
+	}
 
-  vm->DestroyJavaVM();
+	int exitCode = 0;
+	if (e->ExceptionCheck()) {
+		exitCode = -1;
+		e->ExceptionDescribe();
+	}
 
-  return exitCode;
+	vm->DestroyJavaVM();
+
+	return exitCode;
 }

@@ -11,3 +11,8 @@ extractswt:
 	echo "Unpacking swt.jar"
 	cd $(TARGET)/bin/classes; \
 	"$(JAVA_HOME)/bin/jar" xf ../../$(EXTERNAL)/jar/swt.jar 
+
+	echo "Unpacking classpath.jar"
+	cd $(TARGET)/bin/classes; \
+	"$(JAVA_HOME)/bin/jar" xf ../../$(EXTERNAL)/jar/classpath.jar 
+	

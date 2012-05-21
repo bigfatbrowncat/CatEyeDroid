@@ -3,6 +3,8 @@ package com.cateye.ui.swt;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.MessageBox;
 
+import tools.Utf8;
+
 public class Main 
 {
 	public static void main(String[] args)
@@ -23,7 +25,9 @@ public class Main
 		else
 		{
 			System.out.println("CatEye started with file " + args[0]);
-			mainWindow.startWithFile(args[0]);
+			
+			String filename = Utf8.fromUtf8(args[0]);
+			mainWindow.startWithFile(filename);
 		}
 		
 		System.out.println("CatEye finished");

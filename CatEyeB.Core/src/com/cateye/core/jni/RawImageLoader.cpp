@@ -21,7 +21,7 @@
 #endif
 */
 
-#define RAWPROCESSOR_OPEN_BUFFER			1024 * 1024 * 256		// 256Mb
+#define RAWPROCESSOR_OPEN_BUFFER			1024 * 1024 * 64		// 64Mb
 #define	MESSAGE_LIBRAW_OUT_OF_MEMORY		"Out of memory occured during libraw processing"
 #define MESSAGE_LIBRAW_FILE_UNSUPPORTED		"File format is unsupported"
 #define	MESSAGE_LIBRAW_DATA_ERROR			"Libraw data error"
@@ -204,6 +204,8 @@ extern "C" JNIEXPORT jobject JNICALL Java_com_cateye_core_jni_RawImageLoader_loa
 
 	DEBUG_INFO	RawProcessor = new LibRaw();
 
+
+
 	DEBUG_INFO ret = RawProcessor->open_file(fn, RAWPROCESSOR_OPEN_BUFFER);
 	if (ret != LIBRAW_SUCCESS)
 	{
@@ -344,6 +346,46 @@ int my_raw_processing_callback(void *d, enum LibRaw_progress p, int iteration, i
 
 }
 
+#define BOM8A 0xEF
+#define BOM8B 0xBB
+#define BOM8C 0xBF
+
+wchar_t *utf8_to_wchar(const char *string)
+{
+	long b=0,
+		c=0;
+	if ((uchar)string[0]==BOM8A && (uchar)string[1]==BOM8B && (uchar)string[2]==BOM8C)
+		string+=3;
+	for (const char *a=string;*a;a++)
+		if (((uchar)*a)<128 || (*a&192)==192)
+			c++;
+	wchar_t *res=new wchar_t[c+1];
+	res[c]=0;
+	for (uchar *a=(uchar*)string;*a;a++){
+		if (!(*a&128))
+			//Byte represents an ASCII character. Direct copy will do.
+			res[b]=*a;
+		else if ((*a&192)==128)
+			//Byte is the middle of an encoded character. Ignore.
+			continue;
+		else if ((*a&224)==192)
+			//Byte represents the start of an encoded character in the range
+			//U+0080 to U+07FF
+			res[b]=((*a&31)<<6)|(a[1]&63);
+		else if ((*a&240)==224)
+			//Byte represents the start of an encoded character in the range
+			//U+07FF to U+FFFF
+			res[b]=((*a&15)<<12)|((a[1]&63)<<6)|(a[2]&63);
+		else if ((*a&248)==240){
+			//Byte represents the start of an encoded character beyond the
+			//U+FFFF limit of 16-bit integers
+			res[b]='?';
+		}
+		b++;
+	}
+	return res;
+}
+
 extern "C" JNIEXPORT jobject JNICALL Java_com_cateye_core_jni_RawImageLoader_loadPreciseBitmapFromFile
   (JNIEnv * env, jobject obj, jstring filename)
 {
@@ -393,94 +435,112 @@ extern "C" JNIEXPORT jobject JNICALL Java_com_cateye_core_jni_RawImageLoader_loa
 		return NULL;
     }
 
-	DEBUG_INFO
+    wchar_t* fnw = utf8_to_wchar(fn);
 
-	RawProcessor = new LibRaw();
+    FILE* wfile = _wfopen(fnw, L"rb");
 
-	DEBUG_INFO
+    delete[] fnw;
 
-	RawProcessor->imgdata.params.gamm[0] = RawProcessor->imgdata.params.gamm[1] =
-										   RawProcessor->imgdata.params.no_auto_bright = 1;
-	DEBUG_INFO
-	RawProcessor->imgdata.params.output_bps = 16;
-	//RawProcessor->imgdata.params.highlight  = 9;
-	//RawProcessor->imgdata.params.threshold  = (float)200;
-	DEBUG_INFO
+    void* fb = NULL;
 
-	if (divide_by_2)
-	{
-		RawProcessor->imgdata.params.half_size         = 1;
-		RawProcessor->imgdata.params.four_color_rgb    = 1;
-	}
-
-	DEBUG_INFO
-
-
-//	try
-	{
-		RawProcessor->set_progress_handler(my_raw_processing_callback, oc);
-
-		DEBUG_INFO
-		ret = RawProcessor->open_file(fn, RAWPROCESSOR_OPEN_BUFFER);
-		if (ret != LIBRAW_SUCCESS)
-		{
-			goto end;
-		}
-
-		DEBUG_INFO
-		ret = RawProcessor->unpack();
-		if (ret != LIBRAW_SUCCESS)
-		{
-			goto end;
-		}
-		DEBUG_INFO
-		ret = RawProcessor->dcraw_process();
-		if (ret != LIBRAW_SUCCESS)
-		{
-			goto end;
-		}
-		DEBUG_INFO
-
-		image = RawProcessor->dcraw_make_mem_image(&ret);
-	}
-/*	catch (...)
-	{
-		// Do nothing, just leave image as null
-	}*/
-
-	if (image == NULL)
+    if (wfile != NULL)
     {
-		goto end;
+    	// Checking the size
+        fseek(wfile, 0L, SEEK_END);
+        long size = ftell(wfile);
+
+        fseek(wfile, 0L, SEEK_SET);
+
+        // Reading the file
+        fb = malloc(size);
+
+        fread(fb, 1, size, wfile);
+
+        fclose(wfile);
+
+    	DEBUG_INFO
+
+    	RawProcessor = new LibRaw();
+
+    	DEBUG_INFO
+
+    	RawProcessor->imgdata.params.gamm[0] = RawProcessor->imgdata.params.gamm[1] =
+    										   RawProcessor->imgdata.params.no_auto_bright = 1;
+    	DEBUG_INFO
+    	RawProcessor->imgdata.params.output_bps = 16;
+    	//RawProcessor->imgdata.params.highlight  = 9;
+    	//RawProcessor->imgdata.params.threshold  = (float)200;
+    	DEBUG_INFO
+
+    	if (divide_by_2)
+    	{
+    		RawProcessor->imgdata.params.half_size         = 1;
+    		RawProcessor->imgdata.params.four_color_rgb    = 1;
+    	}
+
+    	RawProcessor->set_progress_handler(my_raw_processing_callback, oc);
+
+    	DEBUG_INFO
+    	ret = RawProcessor->open_buffer(fb, size);
+
+
+    	if (ret != LIBRAW_SUCCESS)
+    	{
+    		goto end;
+    	}
+
+    	DEBUG_INFO
+    	ret = RawProcessor->unpack();
+    	if (ret != LIBRAW_SUCCESS)
+    	{
+    		goto end;
+    	}
+    	DEBUG_INFO
+    	ret = RawProcessor->dcraw_process();
+    	if (ret != LIBRAW_SUCCESS)
+    	{
+    		goto end;
+    	}
+    	DEBUG_INFO
+
+    	image = RawProcessor->dcraw_make_mem_image(&ret);
+
+    	if (image == NULL)
+        {
+    		goto end;
+        }
+
+    	DEBUG_INFO
+        decode_precise(pbmp, image);
+    	DEBUG_INFO
+
+    	// Getting bitmap field ids
+    	jfieldID r_id, g_id, b_id, width_id, height_id;
+    	r_id = env->GetFieldID(preciseBitmap_class, "r", "J");
+    	g_id = env->GetFieldID(preciseBitmap_class, "g", "J");
+    	b_id = env->GetFieldID(preciseBitmap_class, "b", "J");
+    	width_id = env->GetFieldID(preciseBitmap_class, "width", "I");
+    	height_id = env->GetFieldID(preciseBitmap_class, "height", "I");
+
+    	DEBUG_INFO
+
+    	// Setting field values
+    	env->SetIntField(preciseBitmap, width_id, pbmp.width);
+    	env->SetIntField(preciseBitmap, height_id, pbmp.height);
+    	env->SetLongField(preciseBitmap, r_id, (jlong)(pbmp.r));
+    	env->SetLongField(preciseBitmap, g_id, (jlong)(pbmp.g));
+    	env->SetLongField(preciseBitmap, b_id, (jlong)(pbmp.b));
+
+    	DEBUG_INFO
+
+    	RawProcessor->recycle();   // just for show this call...
+    	                           // use it if you want to load something else
+    	DEBUG_INFO
+
     }
 
-	DEBUG_INFO
-    decode_precise(pbmp, image);
-	DEBUG_INFO
-
-	// Getting bitmap field ids
-	jfieldID r_id, g_id, b_id, width_id, height_id;
-	r_id = env->GetFieldID(preciseBitmap_class, "r", "J");
-	g_id = env->GetFieldID(preciseBitmap_class, "g", "J");
-	b_id = env->GetFieldID(preciseBitmap_class, "b", "J");
-	width_id = env->GetFieldID(preciseBitmap_class, "width", "I");
-	height_id = env->GetFieldID(preciseBitmap_class, "height", "I");
-
-	DEBUG_INFO
-
-	// Setting field values
-	env->SetIntField(preciseBitmap, width_id, pbmp.width);
-	env->SetIntField(preciseBitmap, height_id, pbmp.height);
-	env->SetLongField(preciseBitmap, r_id, (jlong)(pbmp.r));
-	env->SetLongField(preciseBitmap, g_id, (jlong)(pbmp.g));
-	env->SetLongField(preciseBitmap, b_id, (jlong)(pbmp.b));
-
-	DEBUG_INFO
-
-	RawProcessor->recycle();   // just for show this call...
-	                           // use it if you want to load something else
-	DEBUG_INFO
-
 end:
+	if (fb != NULL) free(fb);
 	delete oc;
 	DEBUG_INFO
 	if (image != NULL) LibRaw::dcraw_clear_mem(image);

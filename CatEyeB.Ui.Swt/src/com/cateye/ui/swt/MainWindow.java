@@ -80,12 +80,14 @@ public class MainWindow extends Shell
 		this.filename = filename;
 		
 		// Cutting the path away
+		/*	TODO uncomment this when you are sure in path encodings 
 		int n = filename.lastIndexOf('\\');
 		String fnp = filename.substring(n + 1);
 		n = filename.lastIndexOf('/');
 		fnp = fnp.substring(n + 1);
+		*/
 		
-		mainComposite.getLoadingScreen().setFilename(fnp);
+		mainComposite.getLoadingScreen().setFilename(filename);
 		
 	}
 	
