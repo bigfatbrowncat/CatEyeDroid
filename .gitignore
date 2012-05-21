@@ -1,7 +1,13 @@
 .metadata/*
 */.settings/*
-*/bin/*
-*/gen/*
-*/libs/*
+
+CatEyePC/bin/*
+CatEyePC/gen/*
+CatEyePC/lib/*
+
+CatEyeDroid/bin/*
+CatEyeDroid/gen/*
+CatEyeDroid/libs/*
 CatEyeDroid/lint.xml
+
 */obj/*
