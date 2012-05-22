@@ -16,7 +16,7 @@ public class Main
 			// Showing error
 			MessageBox noFileMessageBox = new MessageBox(mainWindow, SWT.ICON_WARNING);
 			noFileMessageBox.setText("CatEye");
-			noFileMessageBox.setMessage("No filename specified in the command line. CatEye should be started with an image file.");
+			noFileMessageBox.setMessage("No filename specified in the command line. CatEye should be started with an image file.\nTo open an image you can drag and drop it to the CatEye icon.");
 			
 			noFileMessageBox.open();
 		}
