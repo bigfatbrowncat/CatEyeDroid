@@ -22,51 +22,53 @@
 */
 
 #define RAWPROCESSOR_OPEN_BUFFER			1024 * 1024 * 64		// 64Mb
-#define	MESSAGE_LIBRAW_OUT_OF_MEMORY		"Out of memory occured during libraw processing"
-#define MESSAGE_LIBRAW_FILE_UNSUPPORTED		"File format is unsupported"
-#define	MESSAGE_LIBRAW_DATA_ERROR			"Libraw data error"
-#define	MESSAGE_LIBRAW_IO_ERROR				"I/O error during libraw processing"
-#define	MESSAGE_LIBRAW_CALLBACK_CANCEL		"Cancelled by callback"
-#define	MESSAGE_LIBRAW_BAD_CROP				"Bad crop"
-#define	MESSAGE_LIBRAW_UNKNOWN_ERROR		"Unknown problem"
 
-void throw_libraw_exception(JNIEnv * env, int libraw_code)
+// Java class and field names
+#define JCLASS_EXCEPTION_LIBRAWEXCEPTION								"com/cateye/core/jni/exceptions/LibRawException"
+#define JCLASS_EXCEPTION_LIBRAWEXCEPTION_CREATE_SPECIFIC				"createSpecificException"
+#define JCLASS_EXCEPTION_LIBRAWEXCEPTION_CREATE_SPECIFIC_SIGNATURE		"(I)Lcom/cateye/core/jni/exceptions/LibRawException;"
+
+void throwLibRawExceptionInJava(JNIEnv * env, int libraw_code)
 {
 	jclass exception_cls;
+	jmethodID exception_create_specific_mtd;
+	jobject exception;
 
-	switch (libraw_code)
+	if (libraw_code != LIBRAW_SUCCESS)
 	{
-	case LIBRAW_SUCCESS:
-		return;
-    case LIBRAW_UNSUFFICIENT_MEMORY:
-		exception_cls = env->FindClass("com/cateye/core/NativeHeapAllocationException");
-		env->ThrowNew(exception_cls, MESSAGE_LIBRAW_OUT_OF_MEMORY);
-		break;
-    case LIBRAW_FILE_UNSUPPORTED:
-		exception_cls = env->FindClass("com/cateye/core/UnsupportedFormatException");
-		env->ThrowNew(exception_cls, MESSAGE_LIBRAW_FILE_UNSUPPORTED);
-		break;
-    case LIBRAW_DATA_ERROR:
-		exception_cls = env->FindClass("com/cateye/core/CorruptedImageException");
-		env->ThrowNew(exception_cls, MESSAGE_LIBRAW_DATA_ERROR);
-		break;
-    case LIBRAW_IO_ERROR:
-		exception_cls = env->FindClass("com/cateye/core/BadFileException");
-		env->ThrowNew(exception_cls, MESSAGE_LIBRAW_IO_ERROR);
-		break;
-    case LIBRAW_CANCELLED_BY_CALLBACK:
-		exception_cls = env->FindClass("com/cateye/core/LoadingCancelledException");
-		env->ThrowNew(exception_cls, MESSAGE_LIBRAW_CALLBACK_CANCEL);
-		break;
-    case LIBRAW_BAD_CROP:
-		exception_cls = env->FindClass("com/cateye/core/BadCropException");
-		env->ThrowNew(exception_cls, MESSAGE_LIBRAW_BAD_CROP);
-		break;
-    default:
-		exception_cls = env->FindClass("com/cateye/core/UnknownException");
-		printf("libraw error %d", libraw_code);
-		env->ThrowNew(exception_cls, MESSAGE_LIBRAW_UNKNOWN_ERROR);
-		break;
+    	DEBUG_INFO printf("libraw error %d occured\n", libraw_code);
+
+    	DEBUG_INFO exception_cls = env->FindClass(JCLASS_EXCEPTION_LIBRAWEXCEPTION);
+    	if (!env->ExceptionCheck())
+    	{
+    		DEBUG_INFO exception_create_specific_mtd = env->GetMethodID(exception_cls,
+    		                                                            JCLASS_EXCEPTION_LIBRAWEXCEPTION_CREATE_SPECIFIC,
+    		                                                            JCLASS_EXCEPTION_LIBRAWEXCEPTION_CREATE_SPECIFIC_SIGNATURE);
+        	if (!env->ExceptionCheck())
+        	{
+        		DEBUG_INFO exception = env->CallStaticObjectMethod(exception_cls, exception_create_specific_mtd, libraw_code);
+            	if (!env->ExceptionCheck())
+            	{
+            		DEBUG_INFO env->Throw((jthrowable)exception);
+            	}
+            	else
+            	{
+            		printf("Can't call the createSpecific method in LibRawException class\n");
+                	DEBUG_INFO
+            	}
+        	}
+        	else
+        	{
+        		printf("Can't reach the createSpecific method in LibRawException class\n");
+            	DEBUG_INFO
+        	}
+    	}
+    	else
+    	{
+    		printf("Can't reach LibRawException class\n");
+        	DEBUG_INFO
+    	}
+    	DEBUG_INFO
 	}
 }
 
@@ -204,8 +206,6 @@ extern "C" JNIEXPORT jobject JNICALL Java_com_cateye_core_jni_RawImageLoader_loa
 
 	DEBUG_INFO	RawProcessor = new LibRaw();
 
-
-
 	DEBUG_INFO ret = RawProcessor->open_file(fn, RAWPROCESSOR_OPEN_BUFFER);
 	if (ret != LIBRAW_SUCCESS)
 	{
@@ -304,7 +304,7 @@ end:
 	DEBUG_INFO env->ReleaseStringUTFChars(filename, fn);
 	DEBUG_INFO if (ret != LIBRAW_SUCCESS)
 	{
-		DEBUG_INFO throw_libraw_exception(env, ret);
+		DEBUG_INFO throwLibRawExceptionInJava(env, ret);
 	}
 	DEBUG_INFO return imageDescription;
 }
@@ -510,7 +510,7 @@ end:
 	if (ret != LIBRAW_SUCCESS)
 	{
 		DEBUG_INFO
-		throw_libraw_exception(env, ret);
+		throwLibRawExceptionInJava(env, ret);
 	}
 	DEBUG_INFO
 #ifdef DROID

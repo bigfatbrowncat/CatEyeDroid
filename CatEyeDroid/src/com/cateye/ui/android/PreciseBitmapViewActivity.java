@@ -1,6 +1,6 @@
 package com.cateye.ui.android;
 
-import com.cateye.core.Image;
+import com.cateye.core.jni.RawImage;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -9,7 +9,7 @@ import android.util.Log;
 
 public class PreciseBitmapViewActivity extends Activity 
 {
-    private Image rawImage;
+    private RawImage rawImage;
 	private PreciseBitmapView rawView;
 
 /** Called when the activity is first created. */

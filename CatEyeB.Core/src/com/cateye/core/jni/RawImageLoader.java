@@ -4,21 +4,20 @@ import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.List;
 
-import com.cateye.core.IImageLoader;
 import com.cateye.core.IPreciseBitmap;
 import com.cateye.core.IProgressListener;
-import com.cateye.core.Image;
 import com.cateye.core.ImageDescription;
 import com.cateye.core.IncorrectImageLoaderRelation;
 import com.cateye.core.jni.PreciseBitmap;
+import com.cateye.core.jni.exceptions.LibRawException;
 
-public class RawImageLoader implements IImageLoader
+public class RawImageLoader
 {
 	// Progress listeners
 	private final List<IProgressListener> progressListeners = new ArrayList<IProgressListener>();
 	private boolean divideBy2 = true;
 	
-	private Hashtable<Image, String> imageFileNames = new Hashtable<Image, String>();
+	private Hashtable<RawImage, String> imageFileNames = new Hashtable<RawImage, String>();
 	
 	public void setDivideBy2(boolean value)
 	{
@@ -57,14 +56,14 @@ public class RawImageLoader implements IImageLoader
 		return true;
 	}
 	
-	public Image loadImageFromFile(String fileName)
+	public RawImage createImageFromFile(String fileName)
 	{
-		Image img = new Image(this);
+		RawImage img = new RawImage(this);
 		imageFileNames.put(img, fileName);
 		return img;
 	}
 	
-	public IPreciseBitmap loadPreciseBitmapForImage(Image img)
+	protected IPreciseBitmap loadPreciseBitmapForImage(RawImage img) throws LibRawException
 	{
 		if (imageFileNames.containsKey(img))
 		{
@@ -76,7 +75,7 @@ public class RawImageLoader implements IImageLoader
 		}
 	}
 
-	public ImageDescription loadDescriptionForImage(Image img)
+	protected ImageDescription loadDescriptionForImage(RawImage img) throws LibRawException
 	{
 		if (imageFileNames.containsKey(img))
 		{
@@ -88,7 +87,7 @@ public class RawImageLoader implements IImageLoader
 		}		
 	}
 
-	public void forgetImage(Image img)
+	protected void forgetImage(RawImage img)
 	{
 		if (imageFileNames.containsKey(img))
 		{

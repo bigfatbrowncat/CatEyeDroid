@@ -1,15 +1,20 @@
-package com.cateye.core;
+package com.cateye.core.jni;
 
-public class Image
+import com.cateye.core.IPreciseBitmap;
+import com.cateye.core.ImageDescription;
+import com.cateye.core.exceptions.ImageLoaderException;
+
+public class RawImage
 {
 	protected ImageDescription description;
 	protected IPreciseBitmap bitmap;
-	protected IImageLoader loader;
+	protected RawImageLoader loader;
 	
 	/**
 	 * @return the description of image
+	 * @throws ImageLoaderException 
 	 */
-	public ImageDescription getDescription()
+	public ImageDescription getDescription() throws ImageLoaderException
 	{
 		if (description == null && loader != null)
 			description = loader.loadDescriptionForImage(this);
@@ -19,8 +24,9 @@ public class Image
 	
 	/**
 	 * @return the precise bitmap
+	 * @throws ImageLoaderException 
 	 */
-	public IPreciseBitmap getBitmap()
+	public IPreciseBitmap getBitmap() throws ImageLoaderException
 	{
 		if (bitmap == null && loader != null)
 			bitmap = loader.loadPreciseBitmapForImage(this);
@@ -28,7 +34,7 @@ public class Image
 		return bitmap;
 	}
 	
-	public Image(IImageLoader loader)
+	protected RawImage(RawImageLoader loader)
 	{
 		if (loader == null)
 			throw new IllegalArgumentException("loader shouldn't be null");
@@ -36,19 +42,22 @@ public class Image
 		this.loader = loader;
 	}
 
-	public Image(ImageDescription imageDescription, IPreciseBitmap bitmap)
+	protected RawImage(ImageDescription imageDescription, IPreciseBitmap bitmap)
 	{
 		this.description = imageDescription;
 		this.bitmap = bitmap;
 	}
 	
-	public void free()
+	public void dispose()
 	{
+		loader.forgetImage(this);
+
 		if (this.bitmap != null)
 			this.bitmap.free();
 		
 		if (this.description != null)
 			this.description.free();
+		
 	}
 
 }

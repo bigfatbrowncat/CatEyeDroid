@@ -3,45 +3,66 @@ package com.cateye.ui.swt;
 import java.io.File;
 
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.events.MouseEvent;
-import org.eclipse.swt.events.MouseTrackListener;
-import org.eclipse.swt.events.MouseWheelListener;
 import org.eclipse.swt.layout.FillLayout;
-import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Shell;
 
 import com.cateye.core.IPreciseBitmap;
 import com.cateye.core.IProgressListener;
-import com.cateye.core.Image;
+import com.cateye.core.exceptions.ImageLoaderException;
+import com.cateye.core.jni.RawImage;
 import com.cateye.core.jni.RawImageLoader;
 import com.cateye.ui.swt.MainComposite.ActiveScreen;
 
 public class MainWindow extends Shell
 {
-	private Image image;
+	private RawImage image;
 	private MainComposite mainComposite;
 	private String filename;
 	private static RawImageLoader imageLoader = new RawImageLoader();
 	
-	Runnable loaderRunnable = new Runnable()
+	private Runnable loaderRunnable = new Runnable()
 	{
-		@Override
-		public void run() 
+		private void sendErrorToUi(final String message)
 		{
-			// Loading the image into view
-			image = imageLoader.loadImageFromFile(filename);
-			final IPreciseBitmap pb = image.getBitmap();
-			
 			getDisplay().syncExec(new Runnable() {
 				
 				@Override
 				public void run() 
 				{
-					mainComposite.getPreciseBitmapView().setPreciseBitmap(pb);
+					showError(message);
+				}
+			});			
+		}
+		
+		@Override
+		public void run() 
+		{
+			// Loading the image into view
+			image = imageLoader.createImageFromFile(filename);
+			IPreciseBitmap pb = null;
+			try 
+			{
+				pb = image.getBitmap();
+			} 
+			catch (final ImageLoaderException e) 
+			{
+				sendErrorToUi("Can't open the file " + filename + ".\n" + e.getMessage());
+				return;
+			}
+
+			final IPreciseBitmap preciseBitmap = pb;
+			getDisplay().syncExec(new Runnable() {
+				
+				@Override
+				public void run() 
+				{
+					mainComposite.getPreciseBitmapView().setPreciseBitmap(preciseBitmap);
 					mainComposite.setActiveScreen(ActiveScreen.View);
 				}
 				
 			});
+	
 		}
 	};
 	
@@ -82,25 +103,57 @@ public class MainWindow extends Shell
 		// Setting filename
 		this.filename = filename;
 		
-		// Cutting the path away
-		int n = filename.lastIndexOf(File.separator);
-		String filenameNoPath = filename.substring(n + 1);
-		mainComposite.getLoadingScreen().setFilename(filenameNoPath);
+		File f = new File(filename);
+		mainComposite.getLoadingScreen().setFilename(f.getName());
 		
+	}
+	
+	private void showError(String message)
+	{
+		MessageBox err = new MessageBox(MainWindow.this, SWT.ERROR);
+		err.setText("CatEye");
+		err.setMessage(message);
+		err.open();
+		
+		MainWindow.this.close();		
+	}
+	
+	private boolean checkImageFile(String filename)
+	{
+		// Checking if the file is valid
+		File file = new File(filename);
+		if (!file.exists())
+		{
+			showError("The image file " + filename + " doesn't exist");
+			return false;
+		}
+		if (!file.isFile())
+		{
+			showError("The name doesn't point to a file:\n" + filename);
+			return false;
+		}
+		if (!file.canRead())
+		{
+			showError("You don't have rights to open the image file for reading: \n" + filename);
+			return false;
+		}
+		return true;
 	}
 	
 	public void startWithFile(String filename)
 	{
 		setFilename(filename);
-		
-		open();
-		new Thread(loaderRunnable).start();
-		
-		while (!isDisposed())
+		if (checkImageFile(filename))
 		{
-			if (!getDisplay().readAndDispatch())
+			open();
+			new Thread(loaderRunnable).start();
+			
+			while (!isDisposed())
 			{
-				getDisplay().sleep();
+				if (!getDisplay().readAndDispatch())
+				{
+					getDisplay().sleep();
+				}
 			}
 		}
 	}

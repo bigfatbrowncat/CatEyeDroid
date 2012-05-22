@@ -2,7 +2,7 @@ package com.cateye.ui.android;
 
 import java.util.HashMap;
 
-import com.cateye.core.Image;
+import com.cateye.core.jni.RawImage;
 import com.cateye.core.jni.RawImageLoader;
 
 import android.app.Application;
@@ -11,29 +11,29 @@ public class CatEyeApplication extends Application
 {
 	private RawImageLoader imageLoader = new RawImageLoader();
 
-	private HashMap<Integer, Image> loadedImagesRegistry = new HashMap<Integer, Image>(); 
+	private HashMap<Integer, RawImage> loadedImagesRegistry = new HashMap<Integer, RawImage>(); 
 	private int loadedImagesLastId = 0;
 	
-	public Image loadImage(String fileName)
+	public RawImage loadImage(String fileName)
 	{
-		Image img = imageLoader.loadImageFromFile(fileName);
+		RawImage img = imageLoader.createImageFromFile(fileName);
 		loadedImagesRegistry.put(loadedImagesLastId, img);
 		loadedImagesLastId++;
 		return img;
 	}
 	
-	public void forgetImage(Image image)
+	public void forgetImage(RawImage image)
 	{
-		image.free();
+		image.dispose();
 		loadedImagesRegistry.remove(image);
 	}
 	
-	public Image getImageById(int id)
+	public RawImage getImageById(int id)
 	{
 		return loadedImagesRegistry.get(id);
 	}
 	
-	public int getIdOfImage(Image img)
+	public int getIdOfImage(RawImage img)
 	{
 		for (Integer key : loadedImagesRegistry.keySet())
 		{
