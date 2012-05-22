@@ -3,8 +3,6 @@ package com.cateye.ui.swt;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.MessageBox;
 
-import tools.Utf8;
-
 public class Main 
 {
 	public static void main(String[] args)

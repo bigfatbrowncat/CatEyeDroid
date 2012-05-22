@@ -39,7 +39,7 @@ public class LoadingScreenComposite extends Composite
 		lblLoadingImage.setAlignment(SWT.CENTER);
 		lblLoadingImage.setText("   Loading image...");
 		
-		lblFileName = new Label(composite_client, SWT.NONE);
+		lblFileName = new Label(composite_client, SWT.WRAP);
 		lblFileName.setText("<file name>");
 		lblFileName.setAlignment(SWT.CENTER);
 		

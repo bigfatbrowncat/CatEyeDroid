@@ -28,6 +28,7 @@ public class MainComposite extends Composite
 		
 		loadingScreen = new LoadingScreenComposite(this, SWT.NONE);
 		preciseBitmapView = new PreciseBitmapView(this);
+		
 	}
 
 	public void setActiveScreen(ActiveScreen value)

@@ -1,5 +1,7 @@
 package com.cateye.ui.swt;
 
+import java.io.File;
+
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.events.MouseTrackListener;
@@ -64,7 +66,8 @@ public class MainWindow extends Shell
 	private void prepareContent()
 	{
 		setText("CatEye");
-		setSize(640, 480);
+		setSize(800, 600);
+		setMinimumSize(320, 240);
 		
 		setLayout(new FillLayout());
 		
@@ -80,14 +83,9 @@ public class MainWindow extends Shell
 		this.filename = filename;
 		
 		// Cutting the path away
-		/*	TODO uncomment this when you are sure in path encodings 
-		int n = filename.lastIndexOf('\\');
-		String fnp = filename.substring(n + 1);
-		n = filename.lastIndexOf('/');
-		fnp = fnp.substring(n + 1);
-		*/
-		
-		mainComposite.getLoadingScreen().setFilename(filename);
+		int n = filename.lastIndexOf(File.separator);
+		String filenameNoPath = filename.substring(n + 1);
+		mainComposite.getLoadingScreen().setFilename(filenameNoPath);
 		
 	}
 	
