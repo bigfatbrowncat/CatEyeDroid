@@ -18,58 +18,14 @@ public class MainWindow extends Shell
 {
 	private RawImage image;
 	private MainComposite mainComposite;
-	private String filename;
-	private static RawImageLoader imageLoader = new RawImageLoader();
-	
-	private Runnable loaderRunnable = new Runnable()
-	{
-		private void sendErrorToUi(final String message)
-		{
-			getDisplay().syncExec(new Runnable() {
-				
-				@Override
-				public void run() 
-				{
-					showError(message);
-				}
-			});			
-		}
-		
-		@Override
-		public void run() 
-		{
-			// Loading the image into view
-			image = imageLoader.createImageFromFile(filename);
-			IPreciseBitmap pb = null;
-			try 
-			{
-				pb = image.getBitmap();
-			} 
-			catch (final ImageLoaderException e) 
-			{
-				sendErrorToUi("Can't open the file " + filename + ".\n" + e.getMessage());
-				return;
-			}
-
-			final IPreciseBitmap preciseBitmap = pb;
-			getDisplay().syncExec(new Runnable() {
-				
-				@Override
-				public void run() 
-				{
-					mainComposite.getPreciseBitmapView().setPreciseBitmap(preciseBitmap);
-					mainComposite.setActiveScreen(ActiveScreen.View);
-				}
-				
-			});
-	
-		}
-	};
+	private File imageFile;
+	private RawImageLoader imageLoader;
 	
 	IProgressListener loadingProgressListener = new IProgressListener()
 	{
 		@Override
-		public boolean invoke(Object sender, final float progress) {
+		public boolean invoke(Object sender, final float progress)
+		{
 			getDisplay().syncExec(new Runnable() {
 
 				@Override
@@ -101,11 +57,15 @@ public class MainWindow extends Shell
 	protected void setFilename(String filename)
 	{
 		// Setting filename
-		this.filename = filename;
+		imageFile = new File(filename);
 		
-		File f = new File(filename);
-		mainComposite.getLoadingScreen().setFilename(f.getName());
-		
+		this.setText(imageFile.getName() + " – CatEye");
+		mainComposite.getLoadingScreen().setFilename(imageFile.getName());
+	}
+	
+	public File getImageFile()
+	{
+		return imageFile;
 	}
 	
 	private void showError(String message)
@@ -140,13 +100,60 @@ public class MainWindow extends Shell
 		return true;
 	}
 	
-	public void startWithFile(String filename)
+	public void startWithFile(final String filename)
 	{
 		setFilename(filename);
 		if (checkImageFile(filename))
 		{
 			open();
-			new Thread(loaderRunnable).start();
+			
+			Runnable imageLoadingRunnable = new Runnable()
+			{
+				private void showErrorInUi(final String message)
+				{
+					getDisplay().syncExec(new Runnable() {
+						
+						@Override
+						public void run() 
+						{
+							showError(message);
+						}
+					});			
+				}
+				
+				@Override
+				public void run() 
+				{
+					// Loading the image into view
+					image = imageLoader.createImageFromFile(filename);
+					IPreciseBitmap pb = null;
+					try 
+					{
+						pb = image.getBitmap();
+					} 
+					catch (final ImageLoaderException e) 
+					{
+						showErrorInUi("Can't open the file " + filename + ".\n" + e.getMessage());
+						return;
+					}
+
+					final IPreciseBitmap preciseBitmap = pb;
+					getDisplay().syncExec(new Runnable() 
+					{
+						
+						@Override
+						public void run() 
+						{
+							mainComposite.getPreciseBitmapView().setPreciseBitmap(preciseBitmap);
+							mainComposite.setActiveScreen(ActiveScreen.View);
+						}
+						
+					});
+			
+				}
+			};
+			
+			new Thread(imageLoadingRunnable).start();
 			
 			while (!isDisposed())
 			{
@@ -158,8 +165,9 @@ public class MainWindow extends Shell
 		}
 	}
 	
-	public MainWindow() 
+	public MainWindow(RawImageLoader imageLoader) 
 	{
+		this.imageLoader = imageLoader;
 		prepareContent();
 	}
 	

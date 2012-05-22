@@ -3,11 +3,16 @@ package com.cateye.ui.swt;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.MessageBox;
 
+import com.cateye.core.jni.RawImageLoader;
+
 public class Main 
 {
+	static MainWindow mainWindow;
+	
 	public static void main(String[] args)
 	{
-		MainWindow mainWindow = new MainWindow();
+		RawImageLoader imageLoader = new RawImageLoader();
+		mainWindow = new MainWindow(imageLoader);
 		
 		if (args.length == 0)
 		{
@@ -23,7 +28,6 @@ public class Main
 		else
 		{
 			System.out.println("CatEye started with file " + args[0]);
-			
 			mainWindow.startWithFile(args[0]);
 		}
 		
