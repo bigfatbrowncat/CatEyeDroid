@@ -346,46 +346,6 @@ int my_raw_processing_callback(void *d, enum LibRaw_progress p, int iteration, i
 
 }
 
-#define BOM8A 0xEF
-#define BOM8B 0xBB
-#define BOM8C 0xBF
-
-wchar_t *utf8_to_wchar(const char *string)
-{
-	long b=0,
-		c=0;
-	if ((uchar)string[0]==BOM8A && (uchar)string[1]==BOM8B && (uchar)string[2]==BOM8C)
-		string+=3;
-	for (const char *a=string;*a;a++)
-		if (((uchar)*a)<128 || (*a&192)==192)
-			c++;
-	wchar_t *res=new wchar_t[c+1];
-	res[c]=0;
-	for (uchar *a=(uchar*)string;*a;a++){
-		if (!(*a&128))
-			//Byte represents an ASCII character. Direct copy will do.
-			res[b]=*a;
-		else if ((*a&192)==128)
-			//Byte is the middle of an encoded character. Ignore.
-			continue;
-		else if ((*a&224)==192)
-			//Byte represents the start of an encoded character in the range
-			//U+0080 to U+07FF
-			res[b]=((*a&31)<<6)|(a[1]&63);
-		else if ((*a&240)==224)
-			//Byte represents the start of an encoded character in the range
-			//U+07FF to U+FFFF
-			res[b]=((*a&15)<<12)|((a[1]&63)<<6)|(a[2]&63);
-		else if ((*a&248)==240){
-			//Byte represents the start of an encoded character beyond the
-			//U+FFFF limit of 16-bit integers
-			res[b]='?';
-		}
-		b++;
-	}
-	return res;
-}
-
 extern "C" JNIEXPORT jobject JNICALL Java_com_cateye_core_jni_RawImageLoader_loadPreciseBitmapFromFile
   (JNIEnv * env, jobject obj, jstring filename)
 {
@@ -420,7 +380,7 @@ extern "C" JNIEXPORT jobject JNICALL Java_com_cateye_core_jni_RawImageLoader_loa
 
 	JNIObjectContext* oc = new JNIObjectContext(env, obj);
 
-	const char* fn;
+	const wchar_t* fnw;
     int ret;
 
     LibRaw* RawProcessor = NULL;
@@ -429,17 +389,17 @@ extern "C" JNIEXPORT jobject JNICALL Java_com_cateye_core_jni_RawImageLoader_loa
 
 	DEBUG_INFO
 
-	fn = env->GetStringUTFChars(filename, NULL);
-    if (fn == NULL) {
+	fnw = (wchar_t*)env->GetStringChars(filename, NULL);
+    if (fnw == NULL)
+    {
         printf("Error: NULL string!\n");
 		return NULL;
     }
 
-    wchar_t* fnw = utf8_to_wchar(fn);
-
     FILE* wfile = _wfopen(fnw, L"rb");
 
-    delete[] fnw;
+    env->ReleaseStringChars(filename, (jchar*)fnw);
+
 
     void* fb = NULL;
 
@@ -546,8 +506,6 @@ end:
 	if (image != NULL) LibRaw::dcraw_clear_mem(image);
 	DEBUG_INFO
 	if (RawProcessor != NULL) delete RawProcessor;
-	DEBUG_INFO
-	env->ReleaseStringUTFChars(filename, fn);
 	DEBUG_INFO
 	if (ret != LIBRAW_SUCCESS)
 	{

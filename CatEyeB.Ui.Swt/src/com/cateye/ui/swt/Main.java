@@ -26,8 +26,7 @@ public class Main
 		{
 			System.out.println("CatEye started with file " + args[0]);
 			
-			String filename = Utf8.fromUtf8(args[0]);
-			mainWindow.startWithFile(filename);
+			mainWindow.startWithFile(args[0]);
 		}
 		
 		System.out.println("CatEye finished");

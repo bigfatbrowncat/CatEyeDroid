@@ -5,8 +5,6 @@ import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.List;
 
-import tools.Utf8;
-
 import com.cateye.core.IImageLoader;
 import com.cateye.core.IPreciseBitmap;
 import com.cateye.core.IProgressListener;
@@ -62,10 +60,8 @@ public class RawImageLoader implements IImageLoader
 	
 	public Image loadImageFromFile(String fileName)
 	{
-		String fn2 = Utf8.toUtf8(fileName);
-		
 		Image img = new Image(this);
-		imageFileNames.put(img, fn2);
+		imageFileNames.put(img, fileName);
 		return img;
 	}
 	
