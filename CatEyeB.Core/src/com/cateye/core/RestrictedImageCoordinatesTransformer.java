@@ -5,27 +5,52 @@ public class RestrictedImageCoordinatesTransformer extends ImageCoordinatesTrans
 	protected void applyConstraints()
 	{
 		PointD imageSizeOnScreen = imageSizeOnScreen();
+		
+		// Hard restrictions
 		boolean panCenterHorizontally = imageSizeOnScreen.getX() < getScreenSize().getX();
 		boolean panCenterVertically = imageSizeOnScreen.getY() < getScreenSize().getY();
-		
-//		System.out.println(imageSizeOnScreen().getX() + ", " + imageSizeOnScreen().getY());
-		
+
 		PointD currentPan = super.getPan();
 		if (panCenterHorizontally && panCenterVertically) 
 		{
 			super.setPan(new PointD(0, 0));
-			System.out.print("F");
 		}
 		else if (panCenterHorizontally)
 		{
 			super.setPan(new PointD(0, currentPan.getY()));
-			System.out.print("H");
 		}
 		else if (panCenterVertically)
 		{
 			super.setPan(new PointD(currentPan.getX(), 0));
-			System.out.print("V");
 		}
+		
+		// Soft restrictions
+		PointD scrLT = imageToScreen(new PointD(0, 0));
+		PointD scrRB = imageToScreen(getImageSize());
+		
+		if (!panCenterHorizontally)
+		{
+			if (scrLT.getX() > 0) 
+			{
+				super.addPan(new PointD(-scrLT.getX(), 0));
+			}
+			if (scrRB.getX() < getScreenSize().getX())
+			{
+				super.addPan(new PointD(getScreenSize().getX() - scrRB.getX(), 0));
+			}
+		}
+		if (!panCenterVertically)
+		{
+			if (scrLT.getY() > 0) 
+			{
+				super.addPan(new PointD(0, -scrLT.getY()));
+			}
+			if (scrRB.getY() < getScreenSize().getY())
+			{
+				super.addPan(new PointD(0, getScreenSize().getY() - scrRB.getY()));
+			}
+		}
+		
 	}
 	
 	@Override

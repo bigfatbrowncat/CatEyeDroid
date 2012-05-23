@@ -16,6 +16,7 @@ import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Listener;
 
 import com.cateye.core.IPreciseBitmap;
+import com.cateye.core.ImageCoordinatesTransformer;
 import com.cateye.core.PointD;
 import com.cateye.core.RestrictedImageCoordinatesTransformer;
 
@@ -43,16 +44,18 @@ public class PreciseBitmapView extends Composite
 				int viewWidth = PreciseBitmapView.this.getClientArea().width;
 				int viewHeight = PreciseBitmapView.this.getClientArea().height;
 
+				// TODO Why imageToScreen, and not screenToImage ???
 				PointD lt = imageTransformer.screenToImage(new PointD(0, 0));
-				PointD rb = imageTransformer.screenToImage(
-						new PointD(viewWidth, viewHeight)
-				);
+				PointD rb = imageTransformer.screenToImage(imageTransformer.getScreenSize());
+				
+				//System.out.println("x=0 on screen => x=" + lt.getX() + " on image; y=0 on screen => y=" + lt.getY() + " on image");
+				//System.out.println("x=w on screen => x=" + rb.getX() + " on image; y=h on screen => y=" + rb.getY() + " on image");
 				
 				preciseBitmap.getPixelsRGBIntoByteBuffer(imgData.data, imgData.bytesPerLine,
 						(int)lt.getX(), (int)lt.getY(), 
 						viewWidth, viewHeight, 
 						500, 
-						(float)(imageTransformer.getZoom()));
+						(float)(1.0 / imageTransformer.getZoom()));
 				
 				Image img = new Image(getDisplay(), imgData);
 				e.gc.drawImage(img, 0, 0);
@@ -106,7 +109,7 @@ public class PreciseBitmapView extends Composite
 		public void handleEvent(Event arg0) 
 		{
 			double dZoom = Math.pow(3, (double)arg0.count / 50);
-			dZoom = Math.min(dZoom, 1.0 / imageTransformer.getZoom());
+			//dZoom = Math.min(dZoom, 1.0 / imageTransformer.getZoom());
 			imageTransformer.zoomUponScreenPoint(new PointD(arg0.x, arg0.y), dZoom);
 			
 			PreciseBitmapView.this.redraw();
@@ -142,29 +145,6 @@ public class PreciseBitmapView extends Composite
 		imageTransformer.setScreenSize(new PointD(getClientArea().width, getClientArea().height));
 		
 		imgData = new ImageData(getClientArea().width, getClientArea().height, 24, new PaletteData(0x0000FF, 0x00FF00, 0xFF0000));
-	
-		/*
-		int w = preciseBitmap.getWidth();
-		int h = preciseBitmap.getHeight();
-		if (cacheWidth < w || cacheHeight < h)
-		{
-			// Recreating the pixels array if the image has grown
-			cachePixels = new int[w * h];
-		}
-
-		cachePixels = preciseBitmap.getPixels(cachePixels, true, 0, 0, w, h, 500, 0.5f);
-		imgData = new ImageData(w, h, 24, new PaletteData(0x0000FF, 0x00FF00, 0xFF0000));	// This palette data is the most native for Windows
-		for (int i = 0; i < w; i++)
-		{
-			for (int j = 0; j < h; j++)
-			{
-				imgData.setPixel(i, j, cachePixels[j * w + i]);
-			}
-		}
-		
-		cacheWidth = w;
-		cacheHeight = h;
-		*/
 	}
 	
 	public PreciseBitmapView(Composite parent)

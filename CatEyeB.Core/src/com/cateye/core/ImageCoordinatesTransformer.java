@@ -24,8 +24,8 @@ public class ImageCoordinatesTransformer
 	 */
 	private void calculateMu()
 	{
-		mu = new PointD((imageSize.getX() - screenSize.getX() / zoom) / 2 - pan.getX() / zoom,
-						(imageSize.getY() - screenSize.getY() / zoom) / 2 - pan.getY() / zoom);
+		mu = new PointD((imageSize.getX() - screenSize.getX() * zoom) / 2 - pan.getX() * zoom,
+						(imageSize.getY() - screenSize.getY() * zoom) / 2 - pan.getY() * zoom);
 	}
 	
 	
@@ -65,6 +65,7 @@ public class ImageCoordinatesTransformer
 		return imageSize;
 	}
 	
+
 	/**
 	 * Converts screen coordinates to image coordinates. 
 	 * Answers the question <i>"Which pixel of the image appears at the (x, y) 
@@ -81,6 +82,7 @@ public class ImageCoordinatesTransformer
 		return new PointD(imgX, imgY);
 	}
 	
+
 	/**
 	 * Converts image coordinates to screen coordinates. 
 	 * Answers the question <i>"Where on the screen I could see this &#151; (x, y) pixel of the image?"</i>
@@ -106,8 +108,6 @@ public class ImageCoordinatesTransformer
 		PointD scrLT = imageToScreen(new PointD(0, 0));
 		PointD scrRB = imageToScreen(imageSize);
 
-		System.out.println(imageToScreen(new PointD(0, 0)).getX() + ", " + imageToScreen(new PointD(0, 0)).getY());
-		
 		return new PointD(scrRB.getX() - scrLT.getX(),
 		                  scrRB.getY() - scrLT.getY());
 	}
@@ -172,8 +172,8 @@ public class ImageCoordinatesTransformer
 	public void zoomUponScreenPoint(PointD zoomCenter, double zoomDelta)
 	{
 		this.pan = new PointD(
-				pan.getX() * zoomDelta + (1 - zoomDelta) * (zoomCenter.getX() - 0.5 * screenSize.getX()), 
-				pan.getY() * zoomDelta + (1 - zoomDelta) * (zoomCenter.getY() - 0.5 * screenSize.getY())
+				pan.getX() / zoomDelta + (1 - 1.0 / zoomDelta) * (zoomCenter.getX() - 0.5 * screenSize.getX()), 
+				pan.getY() / zoomDelta + (1 - 1.0 / zoomDelta) * (zoomCenter.getY() - 0.5 * screenSize.getY())
 		);
 		this.zoom *= zoomDelta;
 		calculateMu();
