@@ -44,18 +44,13 @@ public class PreciseBitmapView extends Composite
 				int viewWidth = PreciseBitmapView.this.getClientArea().width;
 				int viewHeight = PreciseBitmapView.this.getClientArea().height;
 
-				// TODO Why imageToScreen, and not screenToImage ???
 				PointD lt = imageTransformer.screenToImage(new PointD(0, 0));
-				PointD rb = imageTransformer.screenToImage(imageTransformer.getScreenSize());
-				
-				//System.out.println("x=0 on screen => x=" + lt.getX() + " on image; y=0 on screen => y=" + lt.getY() + " on image");
-				//System.out.println("x=w on screen => x=" + rb.getX() + " on image; y=h on screen => y=" + rb.getY() + " on image");
 				
 				preciseBitmap.getPixelsRGBIntoByteBuffer(imgData.data, imgData.bytesPerLine,
 						(int)lt.getX(), (int)lt.getY(), 
 						viewWidth, viewHeight, 
 						500, 
-						(float)(1.0 / imageTransformer.getZoom()));
+						(float)(imageTransformer.getZoom()));
 				
 				Image img = new Image(getDisplay(), imgData);
 				e.gc.drawImage(img, 0, 0);

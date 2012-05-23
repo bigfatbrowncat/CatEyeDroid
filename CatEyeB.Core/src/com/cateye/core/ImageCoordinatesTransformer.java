@@ -1,5 +1,12 @@
 package com.cateye.core;
 
+/**
+ * <p><b>ImageCoordinatesTransformer</b></p>
+ * <p>This class converts screen coordinates to image coordinates and vice versa.</p>
+ * <p>It's used to calculate panning and zooming of an image</p>
+ * 
+ * @author Ilya Mizus
+ */
 public class ImageCoordinatesTransformer 
 {
 	/* ************** Published fields ********************************************************* */
@@ -24,8 +31,8 @@ public class ImageCoordinatesTransformer
 	 */
 	private void calculateMu()
 	{
-		mu = new PointD((imageSize.getX() - screenSize.getX() * zoom) / 2 - pan.getX() * zoom,
-						(imageSize.getY() - screenSize.getY() * zoom) / 2 - pan.getY() * zoom);
+		mu = new PointD((imageSize.getX() - screenSize.getX() / zoom) / 2 - pan.getX() / zoom,
+						(imageSize.getY() - screenSize.getY() / zoom) / 2 - pan.getY() / zoom);
 	}
 	
 	
@@ -76,8 +83,8 @@ public class ImageCoordinatesTransformer
 	 */
 	public PointD screenToImage(PointD screenPoint)
 	{
-		double imgX = screenPoint.getX() * zoom + mu.getX();
-		double imgY = screenPoint.getY() * zoom + mu.getY();
+		double imgX = screenPoint.getX() / zoom + mu.getX();
+		double imgY = screenPoint.getY() / zoom + mu.getY();
 		
 		return new PointD(imgX, imgY);
 	}
@@ -92,8 +99,8 @@ public class ImageCoordinatesTransformer
 	 */
 	public PointD imageToScreen(PointD imagePoint)
 	{
-		double scrX = (imagePoint.getX() - mu.getX()) / zoom;
-		double scrY = (imagePoint.getY() - mu.getY()) / zoom;
+		double scrX = (imagePoint.getX() - mu.getX()) * zoom;
+		double scrY = (imagePoint.getY() - mu.getY()) * zoom;
 		
 		return new PointD(scrX, scrY);
 	}
@@ -164,16 +171,20 @@ public class ImageCoordinatesTransformer
 	}
 
 	/**
-	 * Zooms the image by some delta value upon a point 
-	 * on the screen.
+	 * <p>Zooms the image by some delta value upon a point 
+	 * on the screen.</p>
+	 * <p>You should consider that this function changes not only <b>Zoom</b> factor, 
+	 * but <b>Pan</b> as well.
+	 * <p>To know more about <b>Zoom</b> factor read {@link #setZoom(double)}<br>
+	 * To know more about <b>Pan</b> factor read {@link #setPan(double)}</p>
 	 * @param zoomCenter The zooming center point in screen coordinates 
 	 * @param zoomDelta The zooming delta value
 	 */
 	public void zoomUponScreenPoint(PointD zoomCenter, double zoomDelta)
 	{
 		this.pan = new PointD(
-				pan.getX() / zoomDelta + (1 - 1.0 / zoomDelta) * (zoomCenter.getX() - 0.5 * screenSize.getX()), 
-				pan.getY() / zoomDelta + (1 - 1.0 / zoomDelta) * (zoomCenter.getY() - 0.5 * screenSize.getY())
+				pan.getX() * zoomDelta + (1 - zoomDelta) * (zoomCenter.getX() - 0.5 * screenSize.getX()), 
+				pan.getY() * zoomDelta + (1 - zoomDelta) * (zoomCenter.getY() - 0.5 * screenSize.getY())
 		);
 		this.zoom *= zoomDelta;
 		calculateMu();
@@ -181,7 +192,7 @@ public class ImageCoordinatesTransformer
 
 	/**
 	 * Sets the new screen size in screen coordinates (screen pixels)
-	 * <code>super.setScreenSize()</code> should be called in descendants.</code>
+	 * <code>super.setScreenSize()</code> should be called when overridden.</code>
 	 */
 	public void setScreenSize(PointD value)
 	{
@@ -191,7 +202,8 @@ public class ImageCoordinatesTransformer
 
 	/**
 	 * Sets the new image size in image coordinates (image pixels) 
-	 * <code>super.setImageSize()</code> should be called in descendants.</code>
+	 * <code>super.setImageSize()</code> should be called when overridden.</code>
+	 * @param value The new image size
 	 */
 	public void setImageSize(PointD value)
 	{
@@ -200,8 +212,11 @@ public class ImageCoordinatesTransformer
 	}
 
 	/**
-	 * Sets the new Pan value
-	 * <code>super.setPan()</code> should be called in descendants.</code>
+	 * <p>Sets the new <b>Pan</b> value.</p>
+	 * <p>The value <i>(0, 0)</i> means that the left top corner of the image is positioned
+	 * in the left top corner of the screen.</p>
+	 * <p><code>super.setPan()</code> should be called when overridden.</code></p>
+	 * @param value The new full panning value
 	 */
 	public void setPan(PointD value)
 	{
@@ -210,8 +225,15 @@ public class ImageCoordinatesTransformer
 	}
 	
 	/**
-	 * Sets the new Zoom value 
-	 * <code>super.setZoom()</code> should be called in descendants.</code>
+	 * <p>Sets the new <b>Zoom</b> value.</p> 
+	 * <p>The zoom factor of <i>2</i>, for example, means that the linear size (width and height) of the image
+	 * drawn on the screen is twice bigger than original. Image that has size of <i>100 x 200</i> will
+	 * have size <i>(100 * zoom) x (200 * zoom)</i> on the screen.</p>
+	 * <p>Changing the zoom factor is the same as zooming in or out upon image's center. If you want to
+	 * zoom upon any other specified point, you should use {@link #zoomUponScreenPoint(PointD, double)}
+	 * <p><code>super.setZoom()</code> should be called when overridden.</code></p>
+	 * 
+	 * @param value The new full zooming value
 	 */
 	public void setZoom(double value)
 	{

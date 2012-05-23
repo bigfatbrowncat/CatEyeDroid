@@ -1,8 +1,30 @@
 package com.cateye.core;
 
+/**
+ * <p><b>RestrictedImageCoordinatesTransformer</b> extends {@link ImageCoordinatesTransformer}</p>
+ * <p>This class converts screen coordinates to image coordinates and vice versa.</p>
+ * <p>Additionally it constraints panning and zooming with some rules:</p>
+ * <ol>
+ * 		<li>
+ * 			If the image width or height (with the current zoom factor) is smaller than screen's one, 
+ * 			it will be centered in that direction
+ * 		</li>
+ * 		<li>
+ * 			In other cases you are unable to pan screen view out of image.
+ * 		</li>
+ * </ol>
+ * 
+ * @author Ilya Mizus
+ */
+
 public class RestrictedImageCoordinatesTransformer extends ImageCoordinatesTransformer 
 {
-	protected void applyConstraints()
+	/**
+	 * <p><b>For internal usage</b></p>
+	 * <p>This function is called every time when panning or zooming
+	 * changed.</p>
+	 */
+	private void applyConstraints()
 	{
 		PointD imageSizeOnScreen = imageSizeOnScreen();
 		
@@ -21,6 +43,7 @@ public class RestrictedImageCoordinatesTransformer extends ImageCoordinatesTrans
 		}
 		else if (panCenterVertically)
 		{
+			
 			super.setPan(new PointD(currentPan.getX(), 0));
 		}
 		
