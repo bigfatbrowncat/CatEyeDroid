@@ -258,38 +258,141 @@ extern "C" JNIEXPORT void JNICALL Java_com_cateye_core_jni_PreciseBitmap_getPixe
 
 	DEBUG_INFO
 
-	int delta = 0;
-    for (int j = 0; j < screenHeight; j++)
-    {
-		for (int i = 0; i < screenWidth; i++)
+	if (scale > 1)
+	{
+		// This method is good for zooming in and it's quick,
+		// but it doesn't do antialiasing, so we don't use it for zooming out
+
+		int delta = 0;
+		for (int j = 0; j < screenHeight; j++)
 		{
-			int srcx = (int)((double)i / scale + x);
-			int srcy = (int)((double)j / scale + y);
-
-			if (srcx < 0 || srcy < 0 || srcx >= pbmp.width || srcy >= pbmp.height)
+			for (int i = 0; i < screenWidth; i++)
 			{
-				pixels[delta + i * 3 + 0] = 0;
-				pixels[delta + i * 3 + 1] = 0;
-				pixels[delta + i * 3 + 2] = 0;
+				int srcx = (int)((double)i / scale + x);
+				int srcy = (int)((double)j / scale + y);
+
+				if (srcx < 1 || srcy < 1 || srcx >= pbmp.width - 1 || srcy >= pbmp.height - 1)
+				{
+					pixels[delta + i * 3 + 0] = 0;
+					pixels[delta + i * 3 + 1] = 0;
+					pixels[delta + i * 3 + 2] = 0;
+				}
+				else
+				{
+					float r, g, b;
+
+					r = pbmp.r[srcy * pbmp.width + srcx] * brightness;
+					g = pbmp.g[srcy * pbmp.width + srcx] * brightness;
+					b = pbmp.b[srcy * pbmp.width + srcx] * brightness;
+
+
+					if (r > 255) r = 255;
+					if (g > 255) g = 255;
+					if (b > 255) b = 255;
+
+					pixels[delta + i * 3 + 0] = (int)b;
+					pixels[delta + i * 3 + 1] = (int)g;
+					pixels[delta + i * 3 + 2] = (int)r;
+				}
 			}
-			else
+			delta += bytesPerLine;
+		}
+	}
+	else
+	{
+		// Good antialiasing with pixels averaging. Couldn't be used with scale > 1
+
+		float* ptmp = new float[bytesPerLine * screenHeight * 3]();
+		int* pts = new int[screenWidth * screenHeight]();
+
+		// Drawing
+		int invs = (int)(1.0 / scale);
+		for (int j = 0; j < pbmp.height; j++)
+		{
+			for (int i = 0; i < pbmp.width; i++)
 			{
-				int r, g, b;
+				double srcx = ((double)i - x) * scale;
+				double srcy = ((double)j - y) * scale;
+				int isx = (int)srcx;
+				int isy = (int)srcy;
 
-				r = pbmp.r[srcy * pbmp.width + srcx] * brightness,
-				g = pbmp.g[srcy * pbmp.width + srcx] * brightness,
-				b = pbmp.b[srcy * pbmp.width + srcx] * brightness;
+				if (isx < 0 || isy < 0 || isx >= screenWidth || isy >= screenHeight)
+				{
+					// Black here
+				}
+				else
+				{
+					double kx = srcx - isx;
+					double ky = srcy - isy;
 
-				if (r > 255) r = 255;
-				if (g > 255) g = 255;
-				if (b > 255) b = 255;
+					double pdr = brightness * pbmp.r[j * pbmp.width + i];
+					double pdg = brightness * pbmp.g[j * pbmp.width + i];
+					double pdb = brightness * pbmp.b[j * pbmp.width + i];
 
-				pixels[delta + i * 3 + 0] = b;
-				pixels[delta + i * 3 + 1] = g;
-				pixels[delta + i * 3 + 2] = r;
+					ptmp[bytesPerLine * isy + isx * 3 + 0] += pdb;
+					ptmp[bytesPerLine * isy + isx * 3 + 1] += pdg;
+					ptmp[bytesPerLine * isy + isx * 3 + 2] += pdr;
+					pts[screenWidth * isy + isx] ++;
+
+					/*
+					 * We can use "pts" array with floats
+					 * and replace the code above with this, commented out.
+					 * It would make our antialiasing method perfect.
+					 * It's not needed at runtime cause it's too slow.
+					 * Maybe someday when the computers become strong as
+					 * titans and quick as photons we will uncomment it...
+					 *
+					double q = (1 - kx) * (1 - ky);
+					ptmp[bytesPerLine * isy + isx * 3 + 0] += pdb * q;
+					ptmp[bytesPerLine * isy + isx * 3 + 1] += pdg * q;
+					ptmp[bytesPerLine * isy + isx * 3 + 2] += pdr * q;
+					pts[screenWidth * isy + isx] += q;
+
+					q = (1 - kx) * ky;
+					ptmp[bytesPerLine * (isy + 1) + isx * 3 + 0] += pdb * q;
+					ptmp[bytesPerLine * (isy + 1) + isx * 3 + 1] += pdg * q;
+					ptmp[bytesPerLine * (isy + 1) + isx * 3 + 2] += pdr * q;
+					pts[screenWidth * (isy + 1) + isx] += q;
+
+					q = kx * (1 - ky);
+					ptmp[bytesPerLine * isy + (isx + 1) * 3 + 0] += pdb * q;
+					ptmp[bytesPerLine * isy + (isx + 1) * 3 + 1] += pdg * q;
+					ptmp[bytesPerLine * isy + (isx + 1) * 3 + 2] += pdr * q;
+					pts[screenWidth * isy + (isx + 1)] += q;
+
+					q = kx * ky;
+					ptmp[bytesPerLine * (isy + 1) + (isx + 1) * 3 + 0] += pdb * q;
+					ptmp[bytesPerLine * (isy + 1) + (isx + 1) * 3 + 1] += pdg * q;
+					ptmp[bytesPerLine * (isy + 1) + (isx + 1) * 3 + 2] += pdr * q;
+					pts[screenWidth * (isy + 1) + (isx + 1)] += q;
+
+					*/
+				}
 			}
 		}
-		delta += bytesPerLine;
-    }
+
+		// Printing it all out
+		for (int j = 0; j < screenHeight; j++)
+		for (int i = 0; i < screenWidth; i++)
+		{
+			if (pts[screenWidth * j + i] > 0)
+			{
+				float b = ptmp[bytesPerLine * j + i * 3 + 0] / pts[screenWidth * j + i];
+				float g = ptmp[bytesPerLine * j + i * 3 + 1] / pts[screenWidth * j + i];
+				float r = ptmp[bytesPerLine * j + i * 3 + 2] / pts[screenWidth * j + i];
+
+				if (b > 255) b = 255;
+				if (g > 255) g = 255;
+				if (r > 255) r = 255;
+
+				pixels[bytesPerLine * j + i * 3 + 0] = (int)b;
+				pixels[bytesPerLine * j + i * 3 + 1] = (int)g;
+				pixels[bytesPerLine * j + i * 3 + 2] = (int)r;
+			}
+		}
+
+		delete [] ptmp;
+		delete [] pts;
+	}
 	env->ReleaseByteArrayElements(buf, pixels, 0);
 }
