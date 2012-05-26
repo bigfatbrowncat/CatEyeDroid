@@ -1,5 +1,6 @@
 package com.cateye.ui.android;
 
+import com.cateye.core.exceptions.ImageLoaderException;
 import com.cateye.core.jni.RawImage;
 
 import android.app.Activity;
@@ -43,7 +44,12 @@ public class PreciseBitmapViewActivity extends Activity
         }
     	if (rawImage != null) 
     	{
-    		rawView.setPreciseBitmap(rawImage.getBitmap());
+    		try {
+				rawView.setPreciseBitmap(rawImage.getBitmap());
+			} catch (ImageLoaderException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
     	}
     }
 

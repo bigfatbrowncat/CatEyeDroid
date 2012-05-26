@@ -380,7 +380,6 @@ extern "C" JNIEXPORT jobject JNICALL Java_com_cateye_core_jni_RawImageLoader_loa
 
 	JNIObjectContext* oc = new JNIObjectContext(env, obj);
 
-	const wchar_t* fnw;
     int ret;
 
     LibRaw* RawProcessor = NULL;
@@ -389,7 +388,8 @@ extern "C" JNIEXPORT jobject JNICALL Java_com_cateye_core_jni_RawImageLoader_loa
 
 	DEBUG_INFO
 
-	fnw = (wchar_t*)env->GetStringChars(filename, NULL);
+#ifdef WIN32
+	const wchar_t* fnw = (wchar_t*)env->GetStringChars(filename, NULL);
     if (fnw == NULL)
     {
         printf("Error: NULL string!\n");
@@ -399,7 +399,6 @@ extern "C" JNIEXPORT jobject JNICALL Java_com_cateye_core_jni_RawImageLoader_loa
     FILE* wfile = _wfopen(fnw, L"rb");
 
     env->ReleaseStringChars(filename, (jchar*)fnw);
-
 
     void* fb = NULL;
 
@@ -417,6 +416,11 @@ extern "C" JNIEXPORT jobject JNICALL Java_com_cateye_core_jni_RawImageLoader_loa
         fread(fb, 1, size, wfile);
 
         fclose(wfile);
+
+#else
+   	DEBUG_INFO
+    const char* fn = env->GetStringUTFChars(filename, NULL);
+#endif
 
     	DEBUG_INFO
 
@@ -440,9 +444,13 @@ extern "C" JNIEXPORT jobject JNICALL Java_com_cateye_core_jni_RawImageLoader_loa
 
     	RawProcessor->set_progress_handler(my_raw_processing_callback, oc);
 
+#ifdef WIN32
     	DEBUG_INFO
     	ret = RawProcessor->open_buffer(fb, size);
-
+#else
+    	DEBUG_INFO
+    	ret = RawProcessor->open_file(fn, RAWPROCESSOR_OPEN_BUFFER);
+#endif
 
     	if (ret != LIBRAW_SUCCESS)
     	{
@@ -497,10 +505,17 @@ extern "C" JNIEXPORT jobject JNICALL Java_com_cateye_core_jni_RawImageLoader_loa
     	                           // use it if you want to load something else
     	DEBUG_INFO
 
+#ifdef WIN32
     }
+#endif
 
 end:
+
+#ifdef WIN32
 	if (fb != NULL) free(fb);
+#else
+    env->ReleaseStringUTFChars(filename, fn);
+#endif
 	delete oc;
 	DEBUG_INFO
 	if (image != NULL) LibRaw::dcraw_clear_mem(image);
