@@ -22,9 +22,6 @@ import com.cateye.core.RestrictedImageCoordinatesTransformer;
 
 public class PreciseBitmapView extends Composite
 {
-	
-    private int[] cachePixels = new int[getDisplay().getClientArea().width * getDisplay().getClientArea().height];
-
     private ImageData imgData; 
 	private IPreciseBitmap preciseBitmap;
 	
@@ -49,7 +46,7 @@ public class PreciseBitmapView extends Composite
 				preciseBitmap.getPixelsRGBIntoByteBuffer(imgData.data, imgData.bytesPerLine,
 						(int)lt.getX(), (int)lt.getY(), 
 						viewWidth, viewHeight, 
-						500, 
+						1000, 
 						(float)(imageTransformer.getZoom()));
 				
 				Image img = new Image(getDisplay(), imgData);
@@ -59,8 +56,8 @@ public class PreciseBitmapView extends Composite
 		}
 	};
 	
-	MouseListener mouseListener = new MouseListener() {
-		
+	MouseListener mouseListener = new MouseListener() 
+	{
 		@Override
 		public void mouseUp(MouseEvent arg0) 
 		{
@@ -82,8 +79,8 @@ public class PreciseBitmapView extends Composite
 		}
 	};
 	
-	MouseMoveListener mouseMoveListener = new MouseMoveListener() {
-		
+	MouseMoveListener mouseMoveListener = new MouseMoveListener() 
+	{		
 		@Override
 		public void mouseMove(MouseEvent arg0) 
 		{
@@ -111,8 +108,8 @@ public class PreciseBitmapView extends Composite
 		}
 	};
 	
-	ControlListener controlListener = new ControlListener() {
-		
+	ControlListener controlListener = new ControlListener() 
+	{		
 		@Override
 		public void controlResized(ControlEvent arg0) {
 			imageTransformer.setScreenSize(new PointD(getClientArea().width, getClientArea().height));
@@ -157,7 +154,8 @@ public class PreciseBitmapView extends Composite
 	}
 	
 	@Override
-	public void dispose() {
+	public void dispose() 
+	{
 		getDisplay().removeFilter(SWT.MouseWheel, mouseWheelListener);
 		super.dispose();
 	}
