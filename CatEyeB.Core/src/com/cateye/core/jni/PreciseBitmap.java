@@ -3,6 +3,7 @@ package com.cateye.core.jni;
 import com.cateye.core.IPreciseBitmap;
 import com.cateye.core.InvalidDataException;
 import com.cateye.core.NativeHeapAllocationException;
+import com.cateye.core.PreciseBitmapGetPixelsCallback;
 
 public class PreciseBitmap implements IPreciseBitmap
 {
@@ -48,7 +49,7 @@ public class PreciseBitmap implements IPreciseBitmap
 	
 	public native void alloc(int width, int height) throws NativeHeapAllocationException;
 	
-	public native int[] getPixelsBGRIntoIntBuffer(int[] buf, int x, int y, int screenWidth, int screenHeight, float brightness, float scale);
+	public native boolean getPixelsBGRIntoIntBuffer(int[] buf, int x, int y, int screenWidth, int screenHeight, float brightness, float scale, PreciseBitmapGetPixelsCallback cb);
 	public native void getPixelsRGBIntoByteBuffer(byte[] buf, int bytesPerLine, int x, int y, int screenWidth, int screenHeight, float brightness, float scale);
 	
 	public native void free() throws InvalidDataException;

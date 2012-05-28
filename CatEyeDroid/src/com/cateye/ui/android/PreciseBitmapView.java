@@ -16,21 +16,87 @@ import android.view.View;
 
 import com.cateye.core.IPreciseBitmap;
 import com.cateye.core.PointD;
+import com.cateye.core.PreciseBitmapGetPixelsCallback;
 import com.cateye.core.RestrictedImageCoordinatesTransformer;
 
 public class PreciseBitmapView extends View
 {
 	private IPreciseBitmap preciseBitmap;
-	private PointD center = new PointD(0, 0);
-	private double dispersion = 1;	// To avoid NaNs
-	private RestrictedImageCoordinatesTransformer imageTransformer = new RestrictedImageCoordinatesTransformer();
+	private PointD[] centers = new PointD[] { new PointD(0, 0), new PointD(0, 0) };
+	private double[] dispersions = new double[] { 1, 1 };	// To avoid NaNs
+	private RestrictedImageCoordinatesTransformer[] imageTransformers = new RestrictedImageCoordinatesTransformer[2];
     private PointF fingerStartPosition = new PointF(0, 0);
     private ArrayList<PointF> currentFingers = new ArrayList<PointF>();
-    private Bitmap image;// = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888);
-    private int[] pixels;
-	private ArrayList<PointF> oldFingers = new ArrayList<PointF>();
 
+    private volatile int activeImageIndex = 0;
+    private Bitmap[] image = new Bitmap[2];
+    private int[][] pixels = new int[2][];
+    private int[] downscales = new int[] { 4, 1 };
+	
+    private ArrayList<PointF> oldFingers = new ArrayList<PointF>();
+
+	private volatile int viewWidth, viewHeight;
+	
 	//pixels = preciseBitmap.getPixelsBGRIntoIntBuffer(pixels, (int)panX, (int)panY, bitmapWidth, bitmapHeight, 1000, 0.5f);
+	
+	private Thread polishingDrawingThread = null;
+	
+	//private final PreciseBitmapGetPixelsCallback preciseBitmapGetPixelsCallback = 
+	
+	/**
+	 * Drawing the image with the specified quality.
+	 * @param k This is the quality factor. <code>k = 0</code> means low quality, 
+	 * <code>k = 1</code> means high quality
+	 */
+	private boolean drawOrPolish(int k)
+	{
+		viewWidth = getWidth();
+		viewHeight = getHeight();
+		
+		if (image[k] == null)
+		{
+			pixels[k] = new int[(viewWidth / downscales[k]) * (viewHeight / downscales[k])];
+			image[k] = Bitmap.createBitmap(
+					viewWidth / downscales[k], 
+					viewHeight / downscales[k], 
+					Bitmap.Config.ARGB_8888);
+		}
+
+		PointD lt = imageTransformers[k].screenToImage(new PointD(0, 0));
+		Log.i("PreciseBitmapView", "lt = " + lt.toString());
+		
+		boolean res = preciseBitmap.getPixelsBGRIntoIntBuffer(pixels[k], 
+				(int)lt.getX(), (int)lt.getY(),
+				viewWidth / downscales[k], viewHeight / downscales[k], 
+				1000, 
+				(float)(imageTransformers[k].getZoom()), 
+				new PreciseBitmapGetPixelsCallback() {
+					@Override
+					public boolean report() 
+					{
+						return !Thread.interrupted();
+					}
+				}
+			);
+		if (!res) return false;
+		
+        image[k].setPixels(pixels[k], 0, viewWidth / downscales[k], 0, 0, viewWidth / downscales[k], viewHeight / downscales[k]);
+        return true;
+	}
+	
+	private final Runnable polishingDrawingRunnable = new Runnable()
+	{
+		@Override
+		public void run() 
+		{
+			if (drawOrPolish(1))
+			{
+				Log.i("PreciseBitmapView", "polished");
+	        	activeImageIndex = 1;
+		        PreciseBitmapView.this.postInvalidate();
+	        }
+		}
+	};
 	
 	void changeFingersCount(ArrayList<PointF> newFingers)
 	{
@@ -118,23 +184,32 @@ public class PreciseBitmapView extends View
     	
 		return d;
 	}
-		
+	
+	private void createImageTransformers() 
+	{
+		for (int i = 0; i < 2; i++)
+		{
+			imageTransformers[i] = new RestrictedImageCoordinatesTransformer();
+			imageTransformers[i].setZoom(1.0 / downscales[i]);
+		}
+	}
+	
 	public PreciseBitmapView(Context context, AttributeSet attrs, int defStyle)
 	{
 		super(context, attrs, defStyle);
-		// TODO Auto-generated constructor stub
+		createImageTransformers();
 	}
 
 	public PreciseBitmapView(Context context)
 	{
 		super(context);
-		// TODO Auto-generated constructor stub
+		createImageTransformers();
 	}
 
 	public PreciseBitmapView(Context context, AttributeSet attrs)
 	{
 		super(context, attrs);
-		// TODO Auto-generated constructor stub
+		createImageTransformers();
 	}
 
 
@@ -142,10 +217,13 @@ public class PreciseBitmapView extends View
 	{
 		preciseBitmap = value;
 		Log.i("PreciseBitmapView", "Precise bitmap changed. Updating");
-		PointD imageSize = new PointD(preciseBitmap.getWidth(), preciseBitmap.getHeight());
 		
-		imageTransformer.setImageSize(imageSize);
-		Log.i("PreciseBitmapView", "imageSize = " + imageSize.toString());
+		for (int i = 0; i < 2; i++)
+		{
+			PointD imageSize = new PointD(preciseBitmap.getWidth(), preciseBitmap.getHeight());
+			Log.i("PreciseBitmapView", "imageSize = " + imageSize.toString());
+			imageTransformers[i].setImageSize(imageSize);
+		}
 		
 	}
 
@@ -155,38 +233,32 @@ public class PreciseBitmapView extends View
 		super.onSizeChanged(w, h, oldw, oldh);
 		Log.i("PreciseBitmapView", "Size changed. Updating");
 		
-		PointD screenSize = new PointD(this.getWidth(), this.getHeight());
-		imageTransformer.setScreenSize(screenSize);
-		Log.i("PreciseBitmapView", "screenSize = " + screenSize.toString());
+		for (int i = 0; i < 2; i++)
+		{
+			PointD screenSize = new PointD(this.getWidth() / downscales[i], this.getHeight() / downscales[i]);
+			imageTransformers[i].setScreenSize(screenSize);
+			Log.i("PreciseBitmapView", "screenSize = " + screenSize.toString());
+		}
 	}
 	
 	
 	@Override
 	protected void onDraw(Canvas canvas) 
 	{
-		int viewWidth = getWidth();
-		int viewHeight = getHeight();
-		
-		if (image == null)
+		synchronized (this)
 		{
-			pixels = new int[viewWidth * viewHeight];
-			image = Bitmap.createBitmap(viewWidth, viewHeight, Bitmap.Config.ARGB_8888);
+			if (image[activeImageIndex] != null)
+			{
+				Log.i("PreciseBitmapView", "drawing downscale = " + downscales[activeImageIndex]);
+				Rect src = new Rect(0, 0, viewWidth / downscales[activeImageIndex], viewHeight / downscales[activeImageIndex]);
+				Rect dst = new Rect(0, 0, viewWidth, viewHeight);
+				canvas.drawBitmap(image[activeImageIndex], src, dst, null);
+			}
 		}
-
-		PointD lt = imageTransformer.screenToImage(new PointD(0, 0));
-		Log.i("PreciseBitmapView", "lt = " + lt.toString());
-		
-		pixels = preciseBitmap.getPixelsBGRIntoIntBuffer(pixels, 
-				(int)lt.getX(), (int)lt.getY(),
-				viewWidth, viewHeight, 
-				1000, 
-				(float)(imageTransformer.getZoom()));
-		
-        Rect src = new Rect(0, 0, viewWidth, viewHeight);
-        Rect dst = new Rect(0, 0, viewWidth, viewHeight);
-        image.setPixels(pixels, 0, viewWidth, 0, 0, viewWidth, viewHeight);
-		canvas.drawBitmap(image, src, dst, null);
+		if (activeImageIndex == 0) polish();
 	}
+	
+	
 	
 	@Override
 	public boolean onTouchEvent(MotionEvent event) 
@@ -195,48 +267,76 @@ public class PreciseBitmapView extends View
 		    event.getActionMasked() == MotionEvent.ACTION_POINTER_DOWN)
 		{
 			currentFingers = extractFingers(event);
-			center = getCenter(currentFingers);
-			dispersion = getDispersion(currentFingers);
+			for (int i = 0; i < 2; i++)
+			{
+				centers[i] = PointD.multiply(getCenter(currentFingers), 1.0 / downscales[i]);
+				dispersions[i] = getDispersion(currentFingers) / downscales[i];
+			}
 			return true;
 		}
-		/*else if (event.getActionMasked() == MotionEvent.ACTION_UP ||
+		else if (event.getActionMasked() == MotionEvent.ACTION_UP ||
 		         event.getActionMasked() == MotionEvent.ACTION_POINTER_UP)
 		{
-			ArrayList<PointF> f = extractFingers(event);
-			if (f.size() > 0)
+			currentFingers = extractFingers(event);
+			if (currentFingers.size() > 0)
 			{
-				center = getCenter(f);
-				dispersion = getDispersion(f);
+				for (int i = 0; i < 2; i++)
+				{
+					centers[i] = PointD.multiply(getCenter(currentFingers), 1.0 / downscales[i]);
+					dispersions[i] = getDispersion(currentFingers) / downscales[i];
+				}
 			}
-			updateAsync();
+			//invalidate();
 			return true;
-		}*/
+		}
 		else if (event.getActionMasked() == MotionEvent.ACTION_MOVE)
 		{
 			currentFingers = extractFingers(event);
-			PointD newCenter = getCenter(currentFingers);
-			float newDispersion = getDispersion(currentFingers);
-
-			imageTransformer.addPan(new PointD(newCenter.getX() - center.getX(), newCenter.getY() - center.getY()));
 			
-			if (currentFingers.size() > 1)
+			for (int i = 0; i < 2; i++)
 			{
-				// More than one finger -- zooming
-				imageTransformer.zoomUponScreenPoint(newCenter, newDispersion / dispersion);
+				PointD newCenter = PointD.multiply(getCenter(currentFingers), 1.0 / downscales[i]);
+				float newDispersion = getDispersion(currentFingers) / downscales[i];
+
+				imageTransformers[i].addPan(new PointD(newCenter.getX() - centers[i].getX(), newCenter.getY() - centers[i].getY()));
+				
+				if (currentFingers.size() > 1)
+				{
+					// More than one finger -- zooming
+					imageTransformers[i].zoomUponScreenPoint(newCenter, newDispersion / dispersions[i]);
+				}
+	
+				Log.i("PreciseBitmapView", "pan = " + imageTransformers[i].getPan().toString());
+				Log.i("PreciseBitmapView", "zoom = " + imageTransformers[i].getZoom());
+
+				centers[i] = newCenter;
+				dispersions[i] = newDispersion;
 			}
-
-			Log.i("PreciseBitmapView", "pan = " + imageTransformer.getPan().toString());
-			Log.i("PreciseBitmapView", "zoom = " + imageTransformer.getZoom());
-
-			center = newCenter;
-			dispersion = newDispersion;
 			
+			drawOrPolish(0);
+			activeImageIndex = 0;
 			invalidate();
 			
 			return true;
 		}
 		
 		return super.onTouchEvent(event);
+	}
+	
+	private void polish()
+	{
+		if (polishingDrawingThread != null && polishingDrawingThread.isAlive())
+		{
+			polishingDrawingThread.interrupt();
+			try {
+				polishingDrawingThread.join();
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		polishingDrawingThread = new Thread(this.polishingDrawingRunnable);
+		polishingDrawingThread.start();
 	}
 
 }

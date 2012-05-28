@@ -18,6 +18,11 @@ public class PointD
 		return y;
 	}
 	
+	public static PointD multiply(PointD point, double multiplicator)
+	{
+		return new PointD(point.x * multiplicator, point.y * multiplicator);
+	}
+	
 	@Override
 	public String toString() 
 	{

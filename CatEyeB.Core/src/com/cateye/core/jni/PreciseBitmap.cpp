@@ -155,8 +155,8 @@ extern "C" JNIEXPORT jobject JNICALL Java_com_cateye_core_jni_PreciseBitmap_clon
 	}
 }
 
-extern "C" JNIEXPORT jintArray JNICALL Java_com_cateye_core_jni_PreciseBitmap_getPixelsBGRIntoIntBuffer
-	(JNIEnv * env, jobject obj, jintArray buf, jint x, jint y, jint screenWidth, jint screenHeight, jfloat brightness, jfloat scale)
+extern "C" JNIEXPORT jboolean JNICALL Java_com_cateye_core_jni_PreciseBitmap_getPixelsBGRIntoIntBuffer
+	(JNIEnv * env, jobject obj, jintArray buf, jint x, jint y, jint screenWidth, jint screenHeight, jfloat brightness, jfloat scale, jobject cb)
 {
 	// Getting the class
 	jclass cls = env->GetObjectClass(obj);
@@ -185,6 +185,17 @@ extern "C" JNIEXPORT jintArray JNICALL Java_com_cateye_core_jni_PreciseBitmap_ge
 
 	DEBUG_INFO
 
+	// Getting callback
+	jmethodID report_mtd = NULL;
+	if (cb != NULL)
+	{
+		jclass cb_cls = env->GetObjectClass(cb);
+		if (cb_cls != NULL)
+		{
+			report_mtd = env->GetMethodID(cb_cls, "report", "()Z");
+		}
+	}
+
 	if (buf == NULL)
 	{
 		buf = env->NewIntArray(screenWidth * screenHeight);
@@ -193,35 +204,47 @@ extern "C" JNIEXPORT jintArray JNICALL Java_com_cateye_core_jni_PreciseBitmap_ge
 
 	DEBUG_INFO
 
+	bool result = true;
+
     for (int j = 0; j < screenHeight; j++)
-   	for (int i = 0; i < screenWidth; i++)
-   	{
-   		int srcx = (int)((double)i / scale + x);
-   		int srcy = (int)((double)j / scale + y);
+    {
+		for (int i = 0; i < screenWidth; i++)
+		{
+			int srcx = (int)((double)i / scale + x);
+			int srcy = (int)((double)j / scale + y);
 
-   		if (srcx < 0 || srcy < 0 || srcx >= pbmp.width || srcy >= pbmp.height)
-   		{
-   			pixels[j * screenWidth + i] = 0;
-   		}
-   		else
-   		{
-   			int r, g, b;
+			if (srcx < 0 || srcy < 0 || srcx >= pbmp.width || srcy >= pbmp.height)
+			{
+				pixels[j * screenWidth + i] = 0;
+			}
+			else
+			{
+				int r, g, b;
 
-			r = pbmp.r[srcy * pbmp.width + srcx] * brightness,
-			g = pbmp.g[srcy * pbmp.width + srcx] * brightness,
-			b = pbmp.b[srcy * pbmp.width + srcx] * brightness;
+				r = pbmp.r[srcy * pbmp.width + srcx] * brightness,
+				g = pbmp.g[srcy * pbmp.width + srcx] * brightness,
+				b = pbmp.b[srcy * pbmp.width + srcx] * brightness;
 
-			if (r > 255) r = 255;
-			if (g > 255) g = 255;
-			if (b > 255) b = 255;
+				if (r > 255) r = 255;
+				if (g > 255) g = 255;
+				if (b > 255) b = 255;
 
-			pixels[j * screenWidth + i] = (0xff << 24) + (r << 16) + (g << 8) + b;
-   		}
-   	}
+				pixels[j * screenWidth + i] = (0xff << 24) + (r << 16) + (g << 8) + b;
+			}
+		}
+    	if (report_mtd != NULL)
+    	{
+    		if (env->CallBooleanMethod(cb, report_mtd) != true)
+    		{
+    			result = false;
+    			break;
+    		}
+    	}
+    }
 	env->ReleaseIntArrayElements(buf, pixels, 0);
 
 	DEBUG_INFO
-    return buf;
+    return result;
 }
 
 extern "C" JNIEXPORT void JNICALL Java_com_cateye_core_jni_PreciseBitmap_getPixelsRGBIntoByteBuffer
