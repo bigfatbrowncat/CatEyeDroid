@@ -3,7 +3,7 @@ package com.cateye.ui.android;
 import android.graphics.Bitmap;
 import android.graphics.Rect;
 
-import com.cateye.core.IPreciseBitmap;
+import com.cateye.core.ImageCoordinatesTransformer;
 import com.cateye.core.PointD;
 import com.cateye.core.PreciseBitmapGetPixelsCallback;
 import com.cateye.core.PreciseBitmapViewCache;
@@ -14,9 +14,9 @@ public class AndroidPreciseBitmapViewCache extends PreciseBitmapViewCache
 	private Bitmap image;
     private int[] pixels;
 
-    public AndroidPreciseBitmapViewCache(int downscale)
+    public AndroidPreciseBitmapViewCache(int downscale, ImageCoordinatesTransformer imageTransformer)
     {
-		super(downscale);
+		super(downscale, imageTransformer);
 	}
 
     public boolean update()
@@ -29,7 +29,7 @@ public class AndroidPreciseBitmapViewCache extends PreciseBitmapViewCache
 				(int)lt.getX(), (int)lt.getY(),
 				getViewWidth() / getDownscale(), getViewHeight() / getDownscale(), 
 				1000, 
-				(float)(getImageTransformer().getZoom()), 
+				(float)(getImageTransformer().getZoom() / getDownscale()), 
 				new PreciseBitmapGetPixelsCallback() 
 				{
 					@Override

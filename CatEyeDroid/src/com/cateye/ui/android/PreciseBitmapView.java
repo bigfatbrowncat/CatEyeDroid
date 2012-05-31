@@ -12,16 +12,18 @@ import android.view.View;
 
 import com.cateye.core.IPreciseBitmap;
 import com.cateye.core.PointD;
+import com.cateye.core.RestrictedImageCoordinatesTransformer;
 
 public class PreciseBitmapView extends View
 {
 	private IPreciseBitmap preciseBitmap;
+	private RestrictedImageCoordinatesTransformer imageTransformer = new RestrictedImageCoordinatesTransformer();
     private PointF fingerStartPosition = new PointF(0, 0);
     private ArrayList<PointF> currentFingers = new ArrayList<PointF>();
     private AndroidPreciseBitmapViewCache[] cache = new AndroidPreciseBitmapViewCache[] 
     {
-    	new AndroidPreciseBitmapViewCache(4),
-    	new AndroidPreciseBitmapViewCache(1)
+    	new AndroidPreciseBitmapViewCache(4, imageTransformer),
+    	new AndroidPreciseBitmapViewCache(1, imageTransformer)
     };
 
     private volatile int activeImageIndex = 0;
@@ -161,6 +163,10 @@ public class PreciseBitmapView extends View
 		preciseBitmap = value;
 		Log.i("PreciseBitmapView", "Precise bitmap changed. Updating");
 		
+		// Setting imageTransformer's imageSize
+		PointD imageSize = new PointD(preciseBitmap.getWidth(), preciseBitmap.getHeight());
+		imageTransformer.setImageSize(imageSize);
+		
 		for (int i = 0; i < 2; i++)
 		{
 			cache[i].setPreciseBitmap(value);
@@ -174,9 +180,13 @@ public class PreciseBitmapView extends View
 		super.onSizeChanged(w, h, oldw, oldh);
 		Log.i("PreciseBitmapView", "Size changed. Updating");
 		
+		// Setting imageTransformer's screenSize
+		PointD screenSize = new PointD(getWidth(), getHeight());
+		imageTransformer.setScreenSize(screenSize);
+		
 		for (int i = 0; i < 2; i++)
 		{
-			cache[i].setViewSize(new PointD(this.getWidth(), this.getHeight()));
+			cache[i].setViewSize(screenSize);
 		}
 	}
 	
@@ -223,18 +233,27 @@ public class PreciseBitmapView extends View
 		{
 			currentFingers = extractFingers(event);
 			
+			PointD newCenter = getCenter(currentFingers);
+			double newDispersion = getDispersion(currentFingers);
+
+			if (currentFingers.size() > 1)
+			{		
+				// More than one finger -- zooming
+				imageTransformer.addPan(new PointD(newCenter.getX() - cache[activeImageIndex].getCenter().getX(), 
+													newCenter.getY() - cache[activeImageIndex].getCenter().getY()));
+				imageTransformer.zoomUponScreenPoint(newCenter, newDispersion / cache[activeImageIndex].getDispersion());
+			}
+			else
+			{
+				// Only one finger -- just panning
+				imageTransformer.addPan(new PointD(newCenter.getX() - cache[activeImageIndex].getCenter().getX(), 
+						newCenter.getY() - cache[activeImageIndex].getCenter().getY()));
+			}
+			
 			for (int i = 0; i < 2; i++)
 			{
-				if (currentFingers.size() > 1)
-				{
-					// More than one finger -- zooming
-					cache[i].panAndZoom(getCenter(currentFingers), getDispersion(currentFingers));
-				}
-				else
-				{
-					cache[i].pan(getCenter(currentFingers));
-				}
-				
+				cache[i].setCenter(newCenter);
+				cache[i].setDispersion(newDispersion);
 			}
 			
 			drawOrPolish(0);
