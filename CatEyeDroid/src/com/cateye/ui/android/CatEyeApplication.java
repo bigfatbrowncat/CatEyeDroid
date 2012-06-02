@@ -13,6 +13,11 @@ public class CatEyeApplication extends Application
 
 	private HashMap<Integer, RawImage> loadedImagesRegistry = new HashMap<Integer, RawImage>(); 
 	private int loadedImagesLastId = 0;
+
+	public RawImageLoader getImageLoader()
+	{
+		return imageLoader;
+	}
 	
 	public RawImage loadImage(String fileName)
 	{

@@ -163,6 +163,10 @@ public class PreciseBitmapView extends View
 		{
 			cache[i].setPreciseBitmap(value);
 		}
+
+		cache[LQ].update();
+		activeImageIndex = LQ;
+		invalidate();
 	}
 
 	@Override

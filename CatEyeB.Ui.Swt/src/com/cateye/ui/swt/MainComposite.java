@@ -15,11 +15,7 @@ public class MainComposite extends Composite
 	private PreciseBitmapView preciseBitmapView;
 	private StackLayout mainStackLayout;
 	private ActiveScreen activeScreen;
-	/**
-	 * Create the composite.
-	 * @param parent
-	 * @param style
-	 */
+	
 	public MainComposite(Composite parent, int style) 
 	{
 		super(parent, style);

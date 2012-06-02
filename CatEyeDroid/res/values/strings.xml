@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-
-    <string name="hello">Hi, guy!</string>
     <string name="app_name">CatEye Viewer</string>
+    <string name="main_activity_loading">&quot;  Loading...&quot;</string>
 
 </resources>
