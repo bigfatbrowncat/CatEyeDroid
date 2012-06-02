@@ -8,51 +8,114 @@ import org.eclipse.swt.events.MouseListener;
 import org.eclipse.swt.events.MouseMoveListener;
 import org.eclipse.swt.events.PaintEvent;
 import org.eclipse.swt.events.PaintListener;
-import org.eclipse.swt.graphics.Image;
-import org.eclipse.swt.graphics.ImageData;
-import org.eclipse.swt.graphics.PaletteData;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Listener;
 
 import com.cateye.core.IPreciseBitmap;
-import com.cateye.core.ImageCoordinatesTransformer;
 import com.cateye.core.PointD;
 import com.cateye.core.RestrictedImageCoordinatesTransformer;
 
 public class PreciseBitmapView extends Composite
 {
-    private ImageData imgData; 
 	private IPreciseBitmap preciseBitmap;
-	
-	private int x0, y0;
-	private boolean down;
 	private RestrictedImageCoordinatesTransformer imageTransformer = new RestrictedImageCoordinatesTransformer();
+	private boolean down;
+	private SwtPreciseBitmapViewCache[] cache = new SwtPreciseBitmapViewCache[]
+	{
+		new SwtPreciseBitmapViewCache(2, false, imageTransformer),	
+		new SwtPreciseBitmapViewCache(1, true, imageTransformer)	
+	};
+    private static final int LQ = 0; 
+    private static final int HQ = 1;
+    
+    private volatile int activeImageIndex = LQ;
+	
+	private Thread polishingDrawingThread = null;
+	
+	private final Runnable polishingDrawingRunnable = new Runnable()
+	{
+		@Override
+		public void run() 
+		{
+			if (cache[HQ].update())
+			{
+	        	activeImageIndex = HQ;
+	        	getDisplay().asyncExec(new Runnable() 
+	        	{
+					@Override
+					public void run() 
+					{
+						PreciseBitmapView.this.redraw();
+					}
+				});
+	        }
+		}
+	};
+    
+	public PreciseBitmapView(Composite parent)
+	{
+		super(parent, SWT.NO_BACKGROUND);
 
+		addPaintListener(paintListener);
+		addMouseListener(mouseListener);
+		addMouseMoveListener(mouseMoveListener);
+		addControlListener(controlListener);
+
+		getDisplay().addFilter(SWT.MouseWheel, mouseWheelListener);		
+	}
+	
+	public void setPreciseBitmap(IPreciseBitmap value) 
+	{
+		preciseBitmap = value;
+		
+		// Setting imageTransformer's imageSize
+		PointD imageSize = new PointD(preciseBitmap.getWidth(), preciseBitmap.getHeight());
+		imageTransformer.setImageSize(imageSize);
+		
+		for (int i = 0; i < 2; i++)
+		{
+			cache[i].setPreciseBitmap(value);
+		}
+
+		cache[LQ].update();
+		activeImageIndex = LQ;
+		PreciseBitmapView.this.redraw();
+		PreciseBitmapView.this.update();
+	}
+	
+	ControlListener controlListener = new ControlListener() 
+	{		
+		@Override
+		public void controlResized(ControlEvent arg0)
+		{
+			PointD screenSize = new PointD(getClientArea().width, getClientArea().height); 
+			imageTransformer.setScreenSize(screenSize);
+			
+			for (int i = 0; i < 2; i++)
+			{
+				cache[i].setViewSize(screenSize);
+			}
+		
+			cache[LQ].update();
+			activeImageIndex = LQ;
+			PreciseBitmapView.this.redraw();
+			PreciseBitmapView.this.update();
+
+		}
+		
+		@Override
+		public void controlMoved(ControlEvent arg0) {}
+	};
+	
 	PaintListener paintListener = new PaintListener()
 	{
 		@Override
 		public void paintControl(PaintEvent e)
 		{
-			updateImageCache();
+			cache[activeImageIndex].draw(e.gc);
+			if (activeImageIndex == 0) polish();
 
-			if (preciseBitmap != null)
-			{
-				int viewWidth = PreciseBitmapView.this.getClientArea().width;
-				int viewHeight = PreciseBitmapView.this.getClientArea().height;
-
-				PointD lt = imageTransformer.screenToImage(new PointD(0, 0));
-				
-				preciseBitmap.getPixelsRGBIntoByteBuffer(imgData.data, imgData.bytesPerLine,
-						(int)lt.getX(), (int)lt.getY(), 
-						viewWidth, viewHeight, 
-						1000, 
-						(float)(imageTransformer.getZoom()));
-				
-				Image img = new Image(getDisplay(), imgData);
-				e.gc.drawImage(img, 0, 0);
-				img.dispose();
-			}
 		}
 	};
 	
@@ -67,16 +130,16 @@ public class PreciseBitmapView extends Composite
 		@Override
 		public void mouseDown(MouseEvent arg0) 
 		{
-			x0 = arg0.x;
-			y0 = arg0.y;
+			for (int i = 0; i < 2; i++)
+			{
+				cache[i].setCenter(new PointD(arg0.x, arg0.y));
+			}
+			
 			down = true;
 		}
 		
 		@Override
-		public void mouseDoubleClick(MouseEvent arg0)
-		{
-			// TODO Add default zooming here
-		}
+		public void mouseDoubleClick(MouseEvent arg0) {}
 	};
 	
 	MouseMoveListener mouseMoveListener = new MouseMoveListener() 
@@ -88,69 +151,57 @@ public class PreciseBitmapView extends Composite
 			{
 				int x1 = arg0.x;
 				int y1 = arg0.y;
-				imageTransformer.addPan(new PointD(x1 - x0, y1 - y0));
-				x0 = x1; y0 = y1;
+				imageTransformer.addPan(new PointD(x1 - cache[activeImageIndex].getCenter().getX(),
+													y1 - cache[activeImageIndex].getCenter().getY()));
+				for (int i = 0; i < 2; i++)
+				{
+					cache[i].setCenter(new PointD(x1, y1));
+				}
+				cache[LQ].update();
+				activeImageIndex = LQ;
 				PreciseBitmapView.this.redraw();
+				PreciseBitmapView.this.update();
 			}
 		}
 	};
 	
-	Listener mouseWheelListener = new Listener() {
-		
+	Listener mouseWheelListener = new Listener() 
+	{
 		@Override
 		public void handleEvent(Event arg0) 
 		{
-			double dZoom = Math.pow(3, (double)arg0.count / 50);
-			//dZoom = Math.min(dZoom, 1.0 / imageTransformer.getZoom());
-			imageTransformer.zoomUponScreenPoint(new PointD(arg0.x, arg0.y), dZoom);
+			double newDispersion = Math.pow(3, (double)arg0.count / 50) * cache[activeImageIndex].getDispersion();
 			
+			imageTransformer.zoomUponScreenPoint(new PointD(arg0.x, arg0.y), newDispersion / cache[activeImageIndex].getDispersion());
+			
+			for (int i = 0; i < 2; i++)
+			{
+				cache[i].setDispersion(newDispersion);
+			}
+			
+			cache[LQ].update();
+			activeImageIndex = LQ;
 			PreciseBitmapView.this.redraw();
+			PreciseBitmapView.this.update();
 		}
 	};
-	
-	ControlListener controlListener = new ControlListener() 
-	{		
-		@Override
-		public void controlResized(ControlEvent arg0) {
-			imageTransformer.setScreenSize(new PointD(getClientArea().width, getClientArea().height));
-		}
-		
-		@Override
-		public void controlMoved(ControlEvent arg0)
+
+	private void polish()
+	{
+		if (polishingDrawingThread != null && polishingDrawingThread.isAlive())
 		{
-			// Do nothing
-			
+			polishingDrawingThread.interrupt();
+			try 
+			{
+				if (polishingDrawingThread.isAlive()) polishingDrawingThread.join();
+			} 
+			catch (InterruptedException e) 
+			{
+				e.printStackTrace();
+			}
 		}
-	};
-		
-	public void setPreciseBitmap(IPreciseBitmap value) 
-	{
-		preciseBitmap = value;
-	}
-	
-
-	public void updateImageCache()
-	{
-		int w = preciseBitmap.getWidth();
-		int h = preciseBitmap.getHeight();
-		imageTransformer.setImageSize(new PointD(w, h));
-		imageTransformer.setScreenSize(new PointD(getClientArea().width, getClientArea().height));
-		
-		imgData = new ImageData(getClientArea().width, getClientArea().height, 24, new PaletteData(0x0000FF, 0x00FF00, 0xFF0000));
-	}
-	
-	public PreciseBitmapView(Composite parent)
-	{
-		super(parent, SWT.NO_BACKGROUND);
-
-		addPaintListener(paintListener);
-		addMouseListener(mouseListener);
-		addMouseMoveListener(mouseMoveListener);
-		addControlListener(controlListener);
-
-		getDisplay().addFilter(SWT.MouseWheel, mouseWheelListener);		
-		
-		
+		polishingDrawingThread = new Thread(this.polishingDrawingRunnable);
+		polishingDrawingThread.start();
 	}
 	
 	@Override
@@ -160,4 +211,5 @@ public class PreciseBitmapView extends Composite
 		super.dispose();
 	}
 
+	
 }

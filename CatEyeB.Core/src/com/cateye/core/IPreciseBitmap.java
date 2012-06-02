@@ -28,9 +28,21 @@ public interface IPreciseBitmap
 	 * <code>false</code> if the {@link #PreciseBitmapGetPixelsCallback.report()}
 	 * returned <code>false</code> 
 	 */
-	boolean getPixelsBGRIntoIntBuffer(int[] screenBuffer, int x, int y, int screenWidth, int screenHeight, float brightness, float scale, PreciseBitmapGetPixelsCallback cb);
+	boolean getPixelsBGRIntoIntBuffer(int[] screenBuffer, 
+			int x, int y, 
+			int screenWidth, int screenHeight, 
+			float brightness, 
+			float scale, 
+			PreciseBitmapGetPixelsCallback cb);
 	
-	void getPixelsRGBIntoByteBuffer(byte[] buf, int bytesPerLine, int x, int y, int screenWidth, int screenHeight, float brightness, float scale);
+	boolean getPixelsRGBIntoByteBuffer(byte[] buf, 
+			int bytesPerLine, 
+			int x, int y, 
+			int screenWidth, int screenHeight, 
+			float brightness, 
+			float scale,
+			boolean antialias,
+			PreciseBitmapGetPixelsCallback cb);
 	
 	/**
 	 * Creates a clone of the bitmap

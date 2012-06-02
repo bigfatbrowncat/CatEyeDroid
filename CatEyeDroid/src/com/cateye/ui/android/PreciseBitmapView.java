@@ -19,37 +19,29 @@ public class PreciseBitmapView extends View
 	private IPreciseBitmap preciseBitmap;
 	private RestrictedImageCoordinatesTransformer imageTransformer = new RestrictedImageCoordinatesTransformer();
     private PointF fingerStartPosition = new PointF(0, 0);
+    private ArrayList<PointF> oldFingers = new ArrayList<PointF>();
     private ArrayList<PointF> currentFingers = new ArrayList<PointF>();
     private AndroidPreciseBitmapViewCache[] cache = new AndroidPreciseBitmapViewCache[] 
     {
     	new AndroidPreciseBitmapViewCache(4, imageTransformer),
     	new AndroidPreciseBitmapViewCache(1, imageTransformer)
     };
+    private static final int LQ = 0; 
+    private static final int HQ = 1; 
 
-    private volatile int activeImageIndex = 0;
-    private ArrayList<PointF> oldFingers = new ArrayList<PointF>();
+    private volatile int activeImageIndex = LQ;
 	
 	private Thread polishingDrawingThread = null;
-	
-	/**
-	 * Drawing the image with the specified quality.
-	 * @param k This is the quality factor. <code>k = 0</code> means low quality, 
-	 * <code>k = 1</code> means high quality
-	 */
-	private boolean drawOrPolish(int k)
-	{
-		return cache[k].update();
-	}
 	
 	private final Runnable polishingDrawingRunnable = new Runnable()
 	{
 		@Override
 		public void run() 
 		{
-			if (drawOrPolish(1))
+			if (cache[HQ].update())
 			{
 				Log.i("PreciseBitmapView", "polished");
-	        	activeImageIndex = 1;
+	        	activeImageIndex = HQ;
 		        PreciseBitmapView.this.postInvalidate();
 	        }
 		}
@@ -171,7 +163,6 @@ public class PreciseBitmapView extends View
 		{
 			cache[i].setPreciseBitmap(value);
 		}
-		
 	}
 
 	@Override
@@ -256,8 +247,8 @@ public class PreciseBitmapView extends View
 				cache[i].setDispersion(newDispersion);
 			}
 			
-			drawOrPolish(0);
-			activeImageIndex = 0;
+			cache[LQ].update();
+			activeImageIndex = LQ;
 			invalidate();
 			
 			return true;
@@ -271,10 +262,12 @@ public class PreciseBitmapView extends View
 		if (polishingDrawingThread != null && polishingDrawingThread.isAlive())
 		{
 			polishingDrawingThread.interrupt();
-			try {
+			try 
+			{
 				polishingDrawingThread.join();
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
+			} 
+			catch (InterruptedException e) 
+			{
 				e.printStackTrace();
 			}
 		}

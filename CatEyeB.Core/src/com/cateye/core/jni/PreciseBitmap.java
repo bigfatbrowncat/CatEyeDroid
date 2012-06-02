@@ -49,8 +49,21 @@ public class PreciseBitmap implements IPreciseBitmap
 	
 	public native void alloc(int width, int height) throws NativeHeapAllocationException;
 	
-	public native boolean getPixelsBGRIntoIntBuffer(int[] buf, int x, int y, int screenWidth, int screenHeight, float brightness, float scale, PreciseBitmapGetPixelsCallback cb);
-	public native void getPixelsRGBIntoByteBuffer(byte[] buf, int bytesPerLine, int x, int y, int screenWidth, int screenHeight, float brightness, float scale);
+	public native boolean getPixelsBGRIntoIntBuffer(int[] screenBuffer, 
+			int x, int y, 
+			int screenWidth, int screenHeight, 
+			float brightness, 
+			float scale, 
+			PreciseBitmapGetPixelsCallback cb);
+	
+	public native boolean getPixelsRGBIntoByteBuffer(byte[] buf, 
+			int bytesPerLine, 
+			int x, int y, 
+			int screenWidth, int screenHeight, 
+			float brightness, 
+			float scale,
+			boolean antialias,
+			PreciseBitmapGetPixelsCallback cb);
 	
 	public native void free() throws InvalidDataException;
 	

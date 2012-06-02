@@ -21,7 +21,7 @@ public class AndroidPreciseBitmapViewCache extends PreciseBitmapViewCache
 
     public boolean update()
     {
-    	if (image == null || pixels == null) return false;
+    	if (image == null || pixels == null || getPreciseBitmap() == null) return false;
     	
 		PointD lt = getImageTransformer().screenToImage(new PointD(0, 0));
 		
@@ -69,6 +69,7 @@ public class AndroidPreciseBitmapViewCache extends PreciseBitmapViewCache
 		image = Bitmap.createBitmap(
 				(int)viewSize.getX() / getDownscale(), 
 				(int)viewSize.getY() / getDownscale(), 
-				Bitmap.Config.ARGB_8888);		
+				Bitmap.Config.ARGB_8888
+		);		
 	}
 }

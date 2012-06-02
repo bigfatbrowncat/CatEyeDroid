@@ -185,7 +185,7 @@ extern "C" JNIEXPORT jboolean JNICALL Java_com_cateye_core_jni_PreciseBitmap_get
 
 	DEBUG_INFO
 
-	// Getting callback
+	// Getting the callback
 	jmethodID report_mtd = NULL;
 	if (cb != NULL)
 	{
@@ -247,8 +247,8 @@ extern "C" JNIEXPORT jboolean JNICALL Java_com_cateye_core_jni_PreciseBitmap_get
     return result;
 }
 
-extern "C" JNIEXPORT void JNICALL Java_com_cateye_core_jni_PreciseBitmap_getPixelsRGBIntoByteBuffer
-	(JNIEnv * env, jobject obj, jbyteArray buf, jint bytesPerLine, jint x, jint y, jint screenWidth, jint screenHeight, jfloat brightness, jfloat scale)
+extern "C" JNIEXPORT jboolean JNICALL Java_com_cateye_core_jni_PreciseBitmap_getPixelsRGBIntoByteBuffer
+	(JNIEnv * env, jobject obj, jbyteArray buf, jint bytesPerLine, jint x, jint y, jint screenWidth, jint screenHeight, jfloat brightness, jfloat scale, jboolean antialiasing, jobject callback)
 {
 	// Getting the class
 	jclass cls = env->GetObjectClass(obj);
@@ -277,11 +277,24 @@ extern "C" JNIEXPORT void JNICALL Java_com_cateye_core_jni_PreciseBitmap_getPixe
 
 	DEBUG_INFO
 
+	// Getting the callback
+	jmethodID report_mtd = NULL;
+	if (callback != NULL)
+	{
+		jclass cb_cls = env->GetObjectClass(callback);
+		if (cb_cls != NULL)
+		{
+			report_mtd = env->GetMethodID(cb_cls, "report", "()Z");
+		}
+	}
+
 	jbyte* pixels = env->GetByteArrayElements(buf, 0);
 
 	DEBUG_INFO
 
-	if (scale > 1)
+	bool result = true;
+
+	if (scale > 1 || !antialiasing)
 	{
 		// This method is good for zooming in and it's quick,
 		// but it doesn't do antialiasing, so we don't use it for zooming out
@@ -319,6 +332,15 @@ extern "C" JNIEXPORT void JNICALL Java_com_cateye_core_jni_PreciseBitmap_getPixe
 				}
 			}
 			delta += bytesPerLine;
+
+	    	if (report_mtd != NULL)
+	    	{
+	    		if (env->CallBooleanMethod(callback, report_mtd) != true)
+	    		{
+	    			result = false;
+	    			break;
+	    		}
+	    	}
 		}
 	}
 	else
@@ -392,25 +414,53 @@ extern "C" JNIEXPORT void JNICALL Java_com_cateye_core_jni_PreciseBitmap_getPixe
 					*/
 				}
 			}
+
+	    	if (report_mtd != NULL)
+	    	{
+	    		if (env->CallBooleanMethod(callback, report_mtd) != true)
+	    		{
+	    			result = false;
+	    			break;
+	    		}
+	    	}
 		}
 
-		// Printing it all out
-		for (int j = 0; j < screenHeight; j++)
-		for (int i = 0; i < screenWidth; i++)
+		if (result)
 		{
-			if (pts[screenWidth * j + i] > 0)
+			// Printing it all out
+			for (int j = 0; j < screenHeight; j++)
 			{
-				float b = ptmp[bytesPerLine * j + i * 3 + 0] / pts[screenWidth * j + i];
-				float g = ptmp[bytesPerLine * j + i * 3 + 1] / pts[screenWidth * j + i];
-				float r = ptmp[bytesPerLine * j + i * 3 + 2] / pts[screenWidth * j + i];
+				for (int i = 0; i < screenWidth; i++)
+				{
+					if (pts[screenWidth * j + i] > 0)
+					{
+						float b = ptmp[bytesPerLine * j + i * 3 + 0] / pts[screenWidth * j + i];
+						float g = ptmp[bytesPerLine * j + i * 3 + 1] / pts[screenWidth * j + i];
+						float r = ptmp[bytesPerLine * j + i * 3 + 2] / pts[screenWidth * j + i];
 
-				if (b > 255) b = 255;
-				if (g > 255) g = 255;
-				if (r > 255) r = 255;
+						if (b > 255) b = 255;
+						if (g > 255) g = 255;
+						if (r > 255) r = 255;
 
-				pixels[bytesPerLine * j + i * 3 + 0] = (int)b;
-				pixels[bytesPerLine * j + i * 3 + 1] = (int)g;
-				pixels[bytesPerLine * j + i * 3 + 2] = (int)r;
+						pixels[bytesPerLine * j + i * 3 + 0] = (int)b;
+						pixels[bytesPerLine * j + i * 3 + 1] = (int)g;
+						pixels[bytesPerLine * j + i * 3 + 2] = (int)r;
+					}
+					else
+					{
+						pixels[bytesPerLine * j + i * 3 + 0] = 0;
+						pixels[bytesPerLine * j + i * 3 + 1] = 0;
+						pixels[bytesPerLine * j + i * 3 + 2] = 0;
+					}
+				}
+				if (report_mtd != NULL)
+				{
+					if (env->CallBooleanMethod(callback, report_mtd) != true)
+					{
+						result = false;
+						break;
+					}
+				}
 			}
 		}
 
@@ -418,4 +468,6 @@ extern "C" JNIEXPORT void JNICALL Java_com_cateye_core_jni_PreciseBitmap_getPixe
 		delete [] pts;
 	}
 	env->ReleaseByteArrayElements(buf, pixels, 0);
+
+	return result;
 }
