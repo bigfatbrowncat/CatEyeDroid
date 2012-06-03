@@ -56,10 +56,10 @@ public class RawImageLoader
 		return true;
 	}
 	
-	public RawImage createImageFromFile(String fileName)
+	public RawImage createImageFromFile(String filename)
 	{
 		RawImage img = new RawImage(this);
-		imageFileNames.put(img, fileName);
+		imageFileNames.put(img, filename);
 		return img;
 	}
 	

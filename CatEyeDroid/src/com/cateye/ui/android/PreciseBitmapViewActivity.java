@@ -1,11 +1,8 @@
 package com.cateye.ui.android;
 
 import java.io.File;
+import java.io.IOException;
 
-import com.cateye.core.IPreciseBitmap;
-import com.cateye.core.IProgressListener;
-import com.cateye.core.exceptions.ImageLoaderException;
-import com.cateye.core.jni.RawImage;
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Intent;
@@ -13,18 +10,53 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.Window;
 
+import com.cateye.core.IPreciseBitmap;
+import com.cateye.core.exceptions.ImageLoaderException;
+import com.cateye.ui.android.CatEyeApplication.LoadingState;
+
 public class PreciseBitmapViewActivity extends Activity 
 {
-    private RawImage rawImage;
-    private File imageFile;
+    private String filename;
 	private PreciseBitmapView preciseBitmapView;
 	private ProgressDialog loadingProgressDialog = null;
-	private IProgressListener imageLoadingProgressListener = null; 
+//	private IProgressListener imageLoadingProgressListener = null; 
 
+	ImageLoaderReporter imageLoaderReporter = new ImageLoaderReporter() 
+	{
+		@Override
+		public void reportSuccess(IPreciseBitmap preciseBitmap)
+		{
+			loadingProgressDialog.dismiss();
+			PreciseBitmapViewActivity.this.preciseBitmapView.setPreciseBitmap(preciseBitmap);
+		}
+		
+		@Override
+		public void reportException(ImageLoaderException e) 
+		{
+			loadingProgressDialog.dismiss();
+			// TODO Handle exception correctly!
+		}
+
+		@Override
+		public void reportProgress(int progress)
+		{
+			if (!loadingProgressDialog.isShowing())
+			{
+				loadingProgressDialog.show();
+			}
+
+			final File imageFile = new File(filename); 
+			loadingProgressDialog.setProgress(progress);
+    		loadingProgressDialog.setMessage("Loading image " + imageFile.getName() + " (" + progress + "%)...");			
+		}
+	};
+	
 	@Override
     public void onCreate(Bundle savedInstanceState)
 	{
 	    super.onCreate(savedInstanceState);
+
+	    final CatEyeApplication application = ((CatEyeApplication) getApplication());
 		
 	    // Removing title bar
 	    this.requestWindowFeature(Window.FEATURE_NO_TITLE);
@@ -33,12 +65,11 @@ public class PreciseBitmapViewActivity extends Activity
         setContentView(R.layout.raw_viewer_activity);
         preciseBitmapView = (PreciseBitmapView)findViewById(R.id.preciseBitmapView);
 
-        final CatEyeApplication application = ((CatEyeApplication) getApplication());
+        // Determining if the activity has just been created or it has been restored
         if (savedInstanceState != null)
         {
         	Log.i("PreciseBitmapViewActivity", "Restoring the view...");
-        	imageFile = new File(savedInstanceState.getString("filename"));
-        	rawImage = application.getImageById(savedInstanceState.getInt("imageId"));
+        	filename = savedInstanceState.getString("filename");
         }
         else
         {
@@ -47,90 +78,43 @@ public class PreciseBitmapViewActivity extends Activity
 	        if (intent.getAction().equals(Intent.ACTION_VIEW))
 	        {
 	        	Log.i("PreciseBitmapViewActivity", "Received ACTION_VIEW intent. Loading the image...");
-	        	String filename = getIntent().getData().getPath();
-	        	imageFile = new File(filename);
-	        	rawImage = application.loadImage(filename);
-	        	
-	        	
+	        	filename = getIntent().getData().getPath();
 	        }
 	        else
 	        {
 	        	Log.i("PreciseBitmapViewActivity", "Intent action isn't ACTION_VIEW ...");
+	        	this.finish();
+	        	// TODO Incorrect opening error to be shown here	        	
+	        	return;
 	        }
         }
 
-    	if (rawImage != null) 
+		// Creating the file object
+		final File imageFile = new File(filename); 
+        
+		// Creating the progress dialog
+	    loadingProgressDialog = new ProgressDialog(this);
+	    loadingProgressDialog.setMax(100);
+		loadingProgressDialog.setMessage("Loading image " + imageFile.getName() + "...");
+		loadingProgressDialog.setTitle("Please wait");
+		loadingProgressDialog.setCancelable(false);
+        
+		// Start the image loading process or just connect to it
+    	try 
     	{
-    		Log.i("PreciseBitmapViewActivity", "Showing Loading Popup window ...");
-    		
-    	    final ProgressDialog loadingProgressDialog = new ProgressDialog(this);
-    	    loadingProgressDialog.setMax(100);
-    		loadingProgressDialog.setMessage("Image " + imageFile.getName() + " is being loaded (0%)...");
-    		loadingProgressDialog.setTitle("Please wait");
-    		loadingProgressDialog.setCancelable(false);
-    		this.loadingProgressDialog = loadingProgressDialog;
-    		loadingProgressDialog.show();
-
-    		final IProgressListener imageLoadingProgressListener = new IProgressListener()
-    		{
-    			@Override
-    			public boolean invoke(Object sender, final float progress)
-    			{
-    				PreciseBitmapViewActivity.this.runOnUiThread(new Runnable()
-    				{
-    					@Override
-    					public void run()
-    					{
-    						int p = (int)(progress * 100);
-    						loadingProgressDialog.setProgress(p);
-    			    		loadingProgressDialog.setMessage("Image " + imageFile.getName() + " is being loaded (" + p + "%)...");
-    					}
-    				});
-    				
-    				return true;
-    			}
-    		};
-    		
-    		application.getImageLoader().addProgressListener(imageLoadingProgressListener);
-    		
-    		
-    		Runnable imageLoadingRunnable = new Runnable()
-			{
-				@Override
-				public void run() 
-				{
-					IPreciseBitmap pb = null;
-		    		try 
-		    		{
-						pb = rawImage.getBitmap();
-					} 
-		    		catch (ImageLoaderException e) 
-		    		{
-						e.printStackTrace();
-						return;
-					}
-		    		
-					loadingProgressDialog.dismiss();
-					
-
-					final IPreciseBitmap preciseBitmap = pb;
-					PreciseBitmapViewActivity.this.runOnUiThread(new Runnable() 
-					{
-						
-						@Override
-						public void run() 
-						{
-							preciseBitmapView.setPreciseBitmap(preciseBitmap);
-				    		Log.i("PreciseBitmapViewActivity", "Hiding Loading Popup window ...");
-						}
-						
-					});
-		    		
-				}	
-			};
+			LoadingState currentState = application.loadImageForActivity(this, filename, imageLoaderReporter);
 			
-			new Thread(imageLoadingRunnable).start();
-    	}
+			// If the loading pending, show the progress dialog
+			if (currentState == LoadingState.NotLoadedYet || currentState == LoadingState.LoadingInProgress)
+			{
+				loadingProgressDialog.show();
+			}
+		} 
+    	catch (IOException e) 
+    	{
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
         
 	}
 	
@@ -138,8 +122,7 @@ public class PreciseBitmapViewActivity extends Activity
 	protected void onSaveInstanceState(Bundle outState) 
 	{
 		CatEyeApplication app = ((CatEyeApplication) getApplication());
-		outState.putInt("imageId", app.getIdOfImage(rawImage));
-		outState.putString("filename", imageFile.getPath());
+		outState.putString("filename", filename);
 		super.onSaveInstanceState(outState);
 	}
 
@@ -147,27 +130,33 @@ public class PreciseBitmapViewActivity extends Activity
 	public void onBackPressed() 
 	{
 		super.onBackPressed();
-    	if (rawImage != null)
-    	{
-    		CatEyeApplication app = ((CatEyeApplication) getApplication());
-			app.forgetImage(rawImage);
-	    	Log.i("PreciseBitmapViewActivity", "The image has been forgotten");
-    	}
+		CatEyeApplication app = ((CatEyeApplication) getApplication());
+		try 
+		{
+			app.forgetImage(filename);
+		}
+		catch (IOException e) 
+		{
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+    	Log.i("PreciseBitmapViewActivity", "The image has been forgotten");
 	}
 	
 	@Override
 	protected void onDestroy()
 	{
-		final CatEyeApplication application = ((CatEyeApplication) getApplication());
-		if (loadingProgressDialog != null) 
-		{
-			loadingProgressDialog.dismiss();
-		}
-		if (imageLoadingProgressListener != null)
-		{
-			application.getImageLoader().removeProgressListener(imageLoadingProgressListener);
-		}
+		CatEyeApplication app = ((CatEyeApplication) getApplication());
 		
+		try 
+		{
+			app.unregisterImageLoaderReporter(app.requestImageFromRegistry(filename), imageLoaderReporter);
+		}
+		catch (IOException e)
+		{
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
     	Log.i("PreciseBitmapViewActivity", "Destroying the activity");
 		super.onDestroy();
 	}
