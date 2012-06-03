@@ -61,7 +61,7 @@ public class CatEyeApplication extends Application
 	 * @return The current loading progress status
 	 * @throws IOException
 	 */
-	public synchronized LoadingState loadImageForActivity(final Activity activity, String filename, final ImageLoaderReporter reporter) throws IOException
+	public synchronized LoadingState loadImageForActivity(String filename, final ImageLoaderReporter reporter) throws IOException
 	{
 		// Retrieving image from the registry 
 		final RawImage img = requestImageFromRegistry(filename);
@@ -75,18 +75,8 @@ public class CatEyeApplication extends Application
 				@Override
 				public boolean invoke(Object sender, final float progress)
 				{
-					activity.runOnUiThread(new Runnable()
-					{
-						@Override
-						public void run()
-						{
-							int p = (int)(progress * 100);
-							reporters.callReportProgressForImage(img, p);
-							/*loadingProgressDialog.setProgress(p);
-				    		loadingProgressDialog.setMessage("Image " + imageFile.getName() + " is being loaded (" + p + "%)...");*/
-						}
-					});
-					
+					int p = (int)(progress * 100);
+					reporters.callReportProgressForImage(img, p);
 					return true;
 				}
 			};
@@ -105,15 +95,8 @@ public class CatEyeApplication extends Application
 				public void run() 
 				{
 					// At start...
-					activity.runOnUiThread(new Runnable() 
-					{
-						@Override
-						public void run() 
-						{
-							// Showing the progress dialog (reporting the 0% progress)
-							reporters.callReportProgressForImage(img, 0);
-						}
-					});					
+					// Showing the progress dialog (reporting the 0% progress)
+					reporters.callReportProgressForImage(img, 0);
 					
 					// Setting the image's loading state
 					imagesLoadingState.put(img, LoadingState.LoadingInProgress);
@@ -134,37 +117,31 @@ public class CatEyeApplication extends Application
 					// At final...
 		    		final IPreciseBitmap result = pb;
 		    		final ImageLoaderException resultException = exception;
-					activity.runOnUiThread(new Runnable() 
+
+		    		// Removing the progress handler 
+					imageLoader.removeProgressListener(imageLoadingProgressListener);
+
+					// Checking if exception has occured
+					if (resultException != null)
 					{
-						@Override
-						public void run() 
-						{
-							// Removing the progress handler 
-							imageLoader.removeProgressListener(imageLoadingProgressListener);
+						// Setting the image's loading state
+						imagesLoadingState.put(img, LoadingState.LoadingError);
+						
+						// Reporting exception to the caller
+						reporters.callReportExceptionForImage(img, resultException);
+					}
+					else
+					{
+						// Setting the image's loading state
+						imagesLoadingState.put(img, LoadingState.Loaded);
 
-							// Checking if exception has occured
-							if (resultException != null)
-							{
-								// Setting the image's loading state
-								imagesLoadingState.put(img, LoadingState.LoadingError);
-								
-								// Reporting exception to the caller
-								reporters.callReportExceptionForImage(img, resultException);
-							}
-							else
-							{
-								// Setting the image's loading state
-								imagesLoadingState.put(img, LoadingState.Loaded);
-
-								// Adding the result to the registry
-								loadedBitmaps.put(img, result);
-								
-								// Reporting the result to the caller
-								reporters.callReportSuccessForImage(img, result);
-								
-							}
-						}
-					});
+						// Adding the result to the registry
+						loadedBitmaps.put(img, result);
+						
+						// Reporting the result to the caller
+						reporters.callReportSuccessForImage(img, result);
+						
+					}
 		    		
 				}	
 			};

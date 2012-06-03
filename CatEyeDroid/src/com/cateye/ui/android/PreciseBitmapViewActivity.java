@@ -24,31 +24,52 @@ public class PreciseBitmapViewActivity extends Activity
 	ImageLoaderReporter imageLoaderReporter = new ImageLoaderReporter() 
 	{
 		@Override
-		public void reportSuccess(IPreciseBitmap preciseBitmap)
+		public void reportSuccess(final IPreciseBitmap preciseBitmap)
 		{
-			loadingProgressDialog.dismiss();
-			PreciseBitmapViewActivity.this.preciseBitmapView.setPreciseBitmap(preciseBitmap);
+			PreciseBitmapViewActivity.this.runOnUiThread(new Runnable()
+			{
+				@Override
+				public void run() 
+				{
+					loadingProgressDialog.dismiss();
+					PreciseBitmapViewActivity.this.preciseBitmapView.setPreciseBitmap(preciseBitmap);
+				}
+			});
 		}
 		
 		@Override
 		public void reportException(ImageLoaderException e) 
 		{
-			loadingProgressDialog.dismiss();
-			// TODO Handle exception correctly!
+			PreciseBitmapViewActivity.this.runOnUiThread(new Runnable()
+			{
+				@Override
+				public void run() 
+				{
+					loadingProgressDialog.dismiss();
+					// TODO Handle exception correctly!
+				}
+			});
 		}
 
 		@Override
-		public void reportProgress(int progress)
+		public void reportProgress(final int progress)
 		{
-			if (!loadingProgressDialog.isShowing())
+			PreciseBitmapViewActivity.this.runOnUiThread(new Runnable()
 			{
-				loadingProgressDialog.show();
-			}
-
-			final File imageFile = new File(filename); 
-			imageLoadingProgress = progress;
-			loadingProgressDialog.setProgress(progress);
-    		loadingProgressDialog.setMessage("Loading image " + imageFile.getName() + " (" + progress + "%)...");			
+				@Override
+				public void run() 
+				{
+					if (!loadingProgressDialog.isShowing())
+					{
+						loadingProgressDialog.show();
+					}
+		
+					final File imageFile = new File(filename); 
+					imageLoadingProgress = progress;
+					loadingProgressDialog.setProgress(progress);
+		    		loadingProgressDialog.setMessage("Loading image " + imageFile.getName() + " (" + progress + "%)...");
+				}
+			});
 		}
 	};
 	
@@ -108,7 +129,7 @@ public class PreciseBitmapViewActivity extends Activity
 		// Start the image loading process or just connect to it
     	try 
     	{
-			LoadingState currentState = application.loadImageForActivity(this, filename, imageLoaderReporter);
+			LoadingState currentState = application.loadImageForActivity(filename, imageLoaderReporter);
 			
 			// If the loading pending, show the progress dialog
 			if (currentState == LoadingState.NotLoadedYet || currentState == LoadingState.LoadingInProgress)
@@ -152,6 +173,12 @@ public class PreciseBitmapViewActivity extends Activity
 	@Override
 	protected void onDestroy()
 	{
+		// Closing the loading progress dialog
+		if (loadingProgressDialog.isShowing())
+		{
+			loadingProgressDialog.dismiss();
+		}
+		
 		CatEyeApplication app = ((CatEyeApplication) getApplication());
 		
 		try 
