@@ -1,4 +1,4 @@
-package com.cateye.ui.android;
+package com.cateye.ui;
 
 import java.util.ArrayList;
 import java.util.HashMap;

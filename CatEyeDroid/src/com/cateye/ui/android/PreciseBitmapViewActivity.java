@@ -12,11 +12,14 @@ import android.view.Window;
 
 import com.cateye.core.IPreciseBitmap;
 import com.cateye.core.exceptions.ImageLoaderException;
-import com.cateye.ui.android.CatEyeApplication.LoadingState;
+import com.cateye.core.jni.RawImage;
+import com.cateye.ui.ImageLoaderReporter;
+import com.cateye.ui.ImagesRegistry.LoadingState;
 
 public class PreciseBitmapViewActivity extends Activity 
 {
     private String filename;
+    private RawImage image;
 	private PreciseBitmapView preciseBitmapView;
 	private ProgressDialog loadingProgressDialog = null;
 	private int imageLoadingProgress = 0;
@@ -126,21 +129,23 @@ public class PreciseBitmapViewActivity extends Activity
 		loadingProgressDialog.setProgress(imageLoadingProgress);
 		loadingProgressDialog.setMessage("Loading image " + imageFile.getName() + " (" + imageLoadingProgress + "%)...");			
         
-		// Start the image loading process or just connect to it
-    	try 
-    	{
-			LoadingState currentState = application.loadImageForActivity(filename, imageLoaderReporter);
-			
-			// If the loading pending, show the progress dialog
-			if (currentState == LoadingState.NotLoadedYet || currentState == LoadingState.LoadingInProgress)
-			{
-				loadingProgressDialog.show();
-			}
+		// Adding the image to registry
+		try 
+		{
+			image = application.getRegistry().requestOrLoadImage(filename);
 		} 
-    	catch (IOException e) 
-    	{
+		catch (IOException e)
+		{
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+		}
+		
+		LoadingState currentState = application.getRegistry().loadImage(image, imageLoaderReporter);
+		
+		// If the loading pending, show the progress dialog
+		if (currentState == LoadingState.NotLoadedYet || currentState == LoadingState.LoadingInProgress)
+		{
+			loadingProgressDialog.show();
 		}
         
 	}
@@ -158,15 +163,7 @@ public class PreciseBitmapViewActivity extends Activity
 	{
 		super.onBackPressed();
 		CatEyeApplication app = ((CatEyeApplication) getApplication());
-		try 
-		{
-			app.forgetImage(filename);
-		}
-		catch (IOException e) 
-		{
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		app.getRegistry().forgetImage(image);
     	Log.i("PreciseBitmapViewActivity", "The image has been forgotten");
 	}
 	
@@ -181,15 +178,7 @@ public class PreciseBitmapViewActivity extends Activity
 		
 		CatEyeApplication app = ((CatEyeApplication) getApplication());
 		
-		try 
-		{
-			app.unregisterImageLoaderReporter(app.requestImageFromRegistry(filename), imageLoaderReporter);
-		}
-		catch (IOException e)
-		{
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		app.getRegistry().unregisterImageLoaderReporter(image, imageLoaderReporter);
     	Log.i("PreciseBitmapViewActivity", "Destroying the activity");
 		super.onDestroy();
 	}
