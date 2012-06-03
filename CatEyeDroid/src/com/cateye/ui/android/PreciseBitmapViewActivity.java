@@ -19,7 +19,7 @@ public class PreciseBitmapViewActivity extends Activity
     private String filename;
 	private PreciseBitmapView preciseBitmapView;
 	private ProgressDialog loadingProgressDialog = null;
-//	private IProgressListener imageLoadingProgressListener = null; 
+	private int imageLoadingProgress = 0;
 
 	ImageLoaderReporter imageLoaderReporter = new ImageLoaderReporter() 
 	{
@@ -46,6 +46,7 @@ public class PreciseBitmapViewActivity extends Activity
 			}
 
 			final File imageFile = new File(filename); 
+			imageLoadingProgress = progress;
 			loadingProgressDialog.setProgress(progress);
     		loadingProgressDialog.setMessage("Loading image " + imageFile.getName() + " (" + progress + "%)...");			
 		}
@@ -70,6 +71,7 @@ public class PreciseBitmapViewActivity extends Activity
         {
         	Log.i("PreciseBitmapViewActivity", "Restoring the view...");
         	filename = savedInstanceState.getString("filename");
+        	imageLoadingProgress = savedInstanceState.getInt("imageLoadingProgress_progress");
         }
         else
         {
@@ -98,6 +100,10 @@ public class PreciseBitmapViewActivity extends Activity
 		loadingProgressDialog.setMessage("Loading image " + imageFile.getName() + "...");
 		loadingProgressDialog.setTitle("Please wait");
 		loadingProgressDialog.setCancelable(false);
+
+		// Setting the current progress
+		loadingProgressDialog.setProgress(imageLoadingProgress);
+		loadingProgressDialog.setMessage("Loading image " + imageFile.getName() + " (" + imageLoadingProgress + "%)...");			
         
 		// Start the image loading process or just connect to it
     	try 
@@ -121,8 +127,8 @@ public class PreciseBitmapViewActivity extends Activity
 	@Override
 	protected void onSaveInstanceState(Bundle outState) 
 	{
-		CatEyeApplication app = ((CatEyeApplication) getApplication());
 		outState.putString("filename", filename);
+		outState.putInt("imageLoadingProgress_progress", imageLoadingProgress);
 		super.onSaveInstanceState(outState);
 	}
 
