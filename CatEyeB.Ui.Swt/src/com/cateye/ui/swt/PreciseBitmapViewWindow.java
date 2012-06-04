@@ -32,7 +32,7 @@ public class PreciseBitmapViewWindow extends Shell
 				@Override
 				public void run() 
 				{
-					mainComposite.getPreciseBitmapView().setPreciseBitmap(preciseBitmap);
+					mainComposite.getPreciseBitmapViewComposite().getPreciseBitmapView().setPreciseBitmap(preciseBitmap);
 					mainComposite.setActiveScreen(ActiveScreen.View);
 				}
 				

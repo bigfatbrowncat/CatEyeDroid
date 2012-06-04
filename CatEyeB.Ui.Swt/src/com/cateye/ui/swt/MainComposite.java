@@ -1,9 +1,6 @@
 package com.cateye.ui.swt;
 
 import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.Control;
-import org.eclipse.swt.widgets.Event;
-import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.custom.StackLayout;
 import org.eclipse.swt.SWT;
 
@@ -12,7 +9,7 @@ public class MainComposite extends Composite
 	public enum ActiveScreen { Loading, View }
 	
 	private LoadingScreenComposite loadingScreen;
-	private PreciseBitmapView preciseBitmapView;
+	private PreciseBitmapViewComposite preciseBitmapViewComposite;
 	private StackLayout mainStackLayout;
 	private ActiveScreen activeScreen;
 	
@@ -23,8 +20,7 @@ public class MainComposite extends Composite
 		setLayout(mainStackLayout);
 		
 		loadingScreen = new LoadingScreenComposite(this, SWT.NONE);
-		preciseBitmapView = new PreciseBitmapView(this);
-		
+		preciseBitmapViewComposite = new PreciseBitmapViewComposite(this, SWT.NONE);
 	}
 
 	public void setActiveScreen(ActiveScreen value)
@@ -37,7 +33,7 @@ public class MainComposite extends Composite
 			mainStackLayout.topControl = loadingScreen;
 			break;
 		case View:
-			mainStackLayout.topControl = preciseBitmapView;
+			mainStackLayout.topControl = preciseBitmapViewComposite;
 			break;
 		default:
 			throw new RuntimeException("Strange case");
@@ -62,7 +58,8 @@ public class MainComposite extends Composite
 		return loadingScreen;
 	}
 
-	public PreciseBitmapView getPreciseBitmapView() {
-		return preciseBitmapView;
+	public PreciseBitmapViewComposite getPreciseBitmapViewComposite()
+	{
+		return preciseBitmapViewComposite;
 	}
 }
