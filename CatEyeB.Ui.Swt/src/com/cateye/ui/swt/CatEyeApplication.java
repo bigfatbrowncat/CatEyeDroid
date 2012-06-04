@@ -3,16 +3,31 @@ package com.cateye.ui.swt;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.MessageBox;
 
-import com.cateye.core.jni.RawImageLoader;
+import com.cateye.ui.ImagesRegistry;
 
-public class Main 
+public class CatEyeApplication 
 {
-	static MainWindow mainWindow;
+	private static CatEyeApplication application = new CatEyeApplication();
+	
+	/**
+	 * <code>CatEyeApplication</code> class is a singleton. It
+	 * should mimic the same-named class from Android version. 
+	 * @return The one and only <code>CatEyeApplication</code> object.
+	 */
+	public static CatEyeApplication getInstance() { return application; }
+	
+	private ImagesRegistry registry = new ImagesRegistry();
+	
+	public ImagesRegistry getRegistry()
+	{
+		return registry;
+	}
+	
 	
 	public static void main(String[] args)
 	{
-		RawImageLoader imageLoader = new RawImageLoader();
-		mainWindow = new MainWindow(imageLoader);
+		// Entry point. Creating the main window
+		PreciseBitmapViewWindow mainWindow = new PreciseBitmapViewWindow();
 		
 		if (args.length == 0)
 		{
@@ -28,9 +43,9 @@ public class Main
 		else
 		{
 			System.out.println("CatEye started with file " + args[0]);
-			mainWindow.startWithFile(args[0]);
+			mainWindow.openWithFile(args[0]);
 		}
-		
+
 		System.out.println("CatEye finished");
 	}
 }

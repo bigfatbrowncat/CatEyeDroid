@@ -102,7 +102,6 @@ public class ImagesRegistry
 		    		{
 		    			// Saving the exception
 		    			exception = e;
-						return;
 					}
 		    		
 					// At final...

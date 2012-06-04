@@ -61,7 +61,7 @@ public class LibRawException extends ImageLoaderException
 			return "Bad crop";
 			
 		default:
-			return null;
+			return "Unknown error";
 		}
 	}
 

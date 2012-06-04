@@ -54,7 +54,7 @@ int main(int argc, const char** argv)
 	JNI_CreateJavaVM(&vm, &env, &vmArgs);
 	JNIEnv* e = static_cast<JNIEnv*>(env);
 
-	jclass c = e->FindClass("com/cateye/ui/swt/Main");
+	jclass c = e->FindClass("com/cateye/ui/swt/CatEyeApplication");
 	if (not e->ExceptionCheck())
 	{
 		jmethodID m = e->GetStaticMethodID(c, "main", "([Ljava/lang/String;)V");

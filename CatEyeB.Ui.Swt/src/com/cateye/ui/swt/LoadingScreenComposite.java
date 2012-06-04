@@ -54,9 +54,9 @@ public class LoadingScreenComposite extends Composite
 		progressBar.setMaximum(100);
 	}
 
-	public void setFilename(String fileName)
+	public void setFilename(String filename)
 	{
-		lblFileName.setText(fileName);
+		lblFileName.setText(filename);
 	}
 	
 	public void setProgress(int percent)

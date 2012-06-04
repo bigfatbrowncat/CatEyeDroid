@@ -46,6 +46,11 @@ public class MainComposite extends Composite
 		this.layout();
 	}
 	
+	public ActiveScreen getActiveScreen()
+	{
+		return activeScreen;
+	}
+	
 	@Override
 	protected void checkSubclass() 
 	{

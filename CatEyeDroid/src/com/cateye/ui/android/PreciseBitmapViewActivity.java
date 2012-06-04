@@ -49,7 +49,7 @@ public class PreciseBitmapViewActivity extends Activity
 				public void run() 
 				{
 					loadingProgressDialog.dismiss();
-					// TODO Handle exception correctly!
+					// TODO Handle exception here!
 				}
 			});
 		}
