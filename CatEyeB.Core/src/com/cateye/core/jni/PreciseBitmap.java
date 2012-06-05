@@ -68,7 +68,7 @@ public class PreciseBitmap implements IPreciseBitmap
 	public native void free() throws InvalidDataException;
 	
 	@Override
-	public native IPreciseBitmap clone() throws NativeHeapAllocationException, InvalidDataException;
+	public native IPreciseBitmap copy() throws NativeHeapAllocationException, InvalidDataException;
 
 	@Override
 	protected void finalize() throws Throwable {

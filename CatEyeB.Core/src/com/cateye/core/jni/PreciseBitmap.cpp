@@ -99,11 +99,12 @@ extern "C" JNIEXPORT void JNICALL Java_com_cateye_core_jni_PreciseBitmap_free
 
 }
 
-extern "C" JNIEXPORT jobject JNICALL Java_com_cateye_core_jni_PreciseBitmap_clone
+extern "C" JNIEXPORT jobject JNICALL Java_com_cateye_core_jni_PreciseBitmap_copy
 	(JNIEnv * env, jobject obj)
 {
-	// Getting the class
+	// Getting the caller class and it's constructor
 	jclass cls = env->GetObjectClass(obj);
+	jmethodID cls_init = env->GetMethodID(cls, "<init>", "()V");
 
 	jclass exception_cls;
 
@@ -125,24 +126,34 @@ extern "C" JNIEXPORT jobject JNICALL Java_com_cateye_core_jni_PreciseBitmap_clon
 
 	PreciseBitmap dest;
 
+	DEBUG_INFO
+
 	int res = PreciseBitmap_Copy(src, dest);
+
+	DEBUG_INFO
 
 	switch (res)
 	{
 	case BITMAP_RESULT_INCORRECT_DATA:
 		// Getting the com/cateye/core/InvalidDataException class
+		DEBUG_INFO
 		exception_cls = env->FindClass("com/cateye/core/InvalidDataException");
 		env->ThrowNew(exception_cls, INVALID_IMAGE_DATA);
+		DEBUG_INFO
 		return NULL;
 
 	case BITMAP_RESULT_OUT_OF_MEMORY:
 		// Getting the OutOfMemoryException class
+		DEBUG_INFO
 		exception_cls = env->FindClass("com/cateye/core/NativeHeapAllocationException");
 		env->ThrowNew(exception_cls, NATIVE_OUT_OF_MEMORY);
+		DEBUG_INFO
 		return NULL;
 
 	case BITMAP_RESULT_OK:
-		jobject ret_obj = env->AllocObject(cls);
+		DEBUG_INFO
+		jobject ret_obj = env->NewObject(cls, cls_init);
+		DEBUG_INFO
 
 		// Setting field values
 		env->SetIntField(ret_obj, width_id, dest.width);
@@ -150,7 +161,7 @@ extern "C" JNIEXPORT jobject JNICALL Java_com_cateye_core_jni_PreciseBitmap_clon
 		env->SetLongField(ret_obj, r_id, (jlong)(dest.r));
 		env->SetLongField(ret_obj, g_id, (jlong)(dest.g));
 		env->SetLongField(ret_obj, b_id, (jlong)(dest.b));
-
+		DEBUG_INFO
 		return ret_obj;
 	}
 }

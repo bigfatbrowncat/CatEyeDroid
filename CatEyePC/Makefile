@@ -19,9 +19,6 @@ clean:
 colorlib:
 	make -C ../colorlib
 	
-procedures: colorlib
-	make -C ../CatEyeB.Procedures
-
 bitmaps:
 	make -C ../bitmaps
 
@@ -31,8 +28,11 @@ raw:
 jpeg8c:
 	make -C ../jpeg-8c
 	
-core: raw bitmaps procedures
+core: raw bitmaps
 	make -C ../CatEyeB.Core
+
+procedures: core colorlib
+	make -C ../CatEyeB.Procedures
 
 ui: core
 	make -C ../CatEyeB.Ui.Swt

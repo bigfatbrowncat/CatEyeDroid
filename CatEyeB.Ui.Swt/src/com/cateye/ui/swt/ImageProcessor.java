@@ -18,15 +18,20 @@ public class ImageProcessor
 	private void doProcessing(IPreciseBitmap sourcePreciseBitmap)
 	{
 		state = State.Working;
+		
 		// Freeing the previous result
 		if (resultPreciseBitmap != null)
+		{
 			resultPreciseBitmap.free();
+		}
 		
 		CompressorStageOperation cso = new CompressorStageOperation();
 		CompressorStageOperationProcessor csop = new CompressorStageOperationProcessor();
 		
 		// Creating an image for the new result
-		resultPreciseBitmap = sourcePreciseBitmap;//.clone();
+		
+		resultPreciseBitmap = sourcePreciseBitmap.copy();
+		System.out.print("Copy succeeded");
 		
 		csop.process(cso, resultPreciseBitmap, new IProgressListener() 
 		{

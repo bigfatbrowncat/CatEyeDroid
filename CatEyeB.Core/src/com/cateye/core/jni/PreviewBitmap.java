@@ -55,7 +55,7 @@ class PreviewBitmap implements IPreviewBitmap
 	public native void free() throws InvalidDataException;
 	
 	@Override
-	public native IPreviewBitmap clone() throws NativeHeapAllocationException, InvalidDataException;
+	public native IPreviewBitmap copy() throws NativeHeapAllocationException, InvalidDataException;
 
 	@Override
 	protected void finalize() throws Throwable {

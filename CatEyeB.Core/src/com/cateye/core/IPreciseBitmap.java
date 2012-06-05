@@ -47,7 +47,7 @@ public interface IPreciseBitmap
 	/**
 	 * Creates a clone of the bitmap
 	 */
-	IPreciseBitmap clone() throws NativeHeapAllocationException, InvalidDataException;
+	IPreciseBitmap copy() throws NativeHeapAllocationException, InvalidDataException;
 	
 	/**
 	 * Releases native resources

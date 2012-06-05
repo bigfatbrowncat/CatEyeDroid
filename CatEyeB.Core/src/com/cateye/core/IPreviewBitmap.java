@@ -20,7 +20,7 @@ public interface IPreviewBitmap
 	/**
 	 * Creates a clone of the bitmap
 	 */
-	IPreviewBitmap clone() throws NativeHeapAllocationException, InvalidDataException;
+	IPreviewBitmap copy() throws NativeHeapAllocationException, InvalidDataException;
 	
 	/**
 	 * Releases native resources
