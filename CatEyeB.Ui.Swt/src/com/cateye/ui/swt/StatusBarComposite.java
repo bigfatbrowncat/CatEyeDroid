@@ -12,6 +12,8 @@ import org.eclipse.swt.layout.FormAttachment;
 
 public class StatusBarComposite extends Composite 
 {
+	private Label statusTextLabel;
+	private ProgressBar progressBar;
 
 	/**
 	 * Create the composite.
@@ -28,13 +30,13 @@ public class StatusBarComposite extends Composite
 		formLayout.marginBottom = 3;
 		setLayout(formLayout);
 		
-		ProgressBar statusProgressBar = new ProgressBar(this, SWT.NONE);
-		FormData fd_statusProgressBar = new FormData();
-		fd_statusProgressBar.left = new FormAttachment(100, -179);
-		fd_statusProgressBar.right = new FormAttachment(100);
-		fd_statusProgressBar.bottom = new FormAttachment(100);
-		fd_statusProgressBar.top = new FormAttachment(0);
-		statusProgressBar.setLayoutData(fd_statusProgressBar);
+		progressBar = new ProgressBar(this, SWT.NONE);
+		FormData fd_ProgressBar = new FormData();
+		fd_ProgressBar.left = new FormAttachment(100, -179);
+		fd_ProgressBar.right = new FormAttachment(100);
+		fd_ProgressBar.bottom = new FormAttachment(100);
+		fd_ProgressBar.top = new FormAttachment(0);
+		progressBar.setLayoutData(fd_ProgressBar);
 		
 		Composite composite = new Composite(this, SWT.NONE);
 		GridLayout gl_composite = new GridLayout(1, false);
@@ -44,17 +46,32 @@ public class StatusBarComposite extends Composite
 		gl_composite.horizontalSpacing = 0;
 		composite.setLayout(gl_composite);
 		FormData fd_composite = new FormData();
-		fd_composite.bottom = new FormAttachment(statusProgressBar, 0, SWT.BOTTOM);
-		fd_composite.top = new FormAttachment(statusProgressBar, 0, SWT.TOP);
-		fd_composite.right = new FormAttachment(statusProgressBar, -6);
+		fd_composite.bottom = new FormAttachment(progressBar, 0, SWT.BOTTOM);
+		fd_composite.top = new FormAttachment(progressBar, 0, SWT.TOP);
+		fd_composite.right = new FormAttachment(progressBar, -6);
 		fd_composite.left = new FormAttachment(0);
 		composite.setLayoutData(fd_composite);
 		
-		Label label = new Label(composite, SWT.HORIZONTAL);
-		label.setLayoutData(new GridData(SWT.LEFT, SWT.CENTER, true, true, 1, 1));
-		label.setText("Ready");
-		label.setCapture(true);
+		statusTextLabel = new Label(composite, SWT.HORIZONTAL);
+		statusTextLabel.setLayoutData(new GridData(SWT.LEFT, SWT.CENTER, true, true, 1, 1));
+		statusTextLabel.setText("Ready");
+		statusTextLabel.setCapture(true);
 
+	}
+	
+	public void setStatusText(String value)
+	{
+		statusTextLabel.setText(value);
+	}
+	
+	public void setProgress(int value)
+	{
+		progressBar.setSelection(value);
+	}
+	
+	public void setProgressBarVisibility(boolean value)
+	{
+		progressBar.setVisible(value);
 	}
 
 	@Override

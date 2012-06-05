@@ -3,7 +3,7 @@ package com.cateye.ui.swt;
 import java.util.ArrayList;
 
 import com.cateye.core.IPreciseBitmap;
-import com.cateye.core.IProgressListener;
+import com.cateye.core.ProgressListener;
 import com.cateye.procedures.compressor.CompressorStageOperation;
 import com.cateye.procedures.compressor.CompressorStageOperationProcessor;
 
@@ -33,11 +33,10 @@ public class ImageProcessor
 		resultPreciseBitmap = sourcePreciseBitmap.copy();
 		System.out.print("Copy succeeded");
 		
-		csop.process(cso, resultPreciseBitmap, new IProgressListener() 
+		csop.process(cso, resultPreciseBitmap, new ProgressListener() 
 		{
 			@Override
-			public boolean invoke(Object sender, float progress)
-			{
+			public boolean reportProgress(float progress) {
 				// Report the processing progress. 
 				// If any of the listeners return false, we return false. That will mean "cancel"
 

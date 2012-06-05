@@ -9,7 +9,7 @@ import java.util.Map;
 import java.util.Set;
 
 import com.cateye.core.IPreciseBitmap;
-import com.cateye.core.IProgressListener;
+import com.cateye.core.ProgressListener;
 import com.cateye.core.exceptions.ImageLoaderException;
 import com.cateye.core.jni.RawImage;
 import com.cateye.core.jni.RawImageLoader;
@@ -61,10 +61,10 @@ public class ImagesRegistry
 		if (loadingStates.get(img) == LoadingState.NotLoadedYet || loadingStates.get(img) == LoadingState.LoadingError)
 		{
 			// Creating the progress listener
-			final IProgressListener imageLoadingProgressListener = new IProgressListener()
+			final ProgressListener imageLoadingProgressListener = new ProgressListener()
 			{
 				@Override
-				public boolean invoke(Object sender, final float progress)
+				public boolean reportProgress(float progress) 
 				{
 					int p = (int)(progress * 100);
 					reporters.callReportProgressForImage(img, p);

@@ -1,7 +1,7 @@
 package com.cateye.procedures.compressor;
 
 import com.cateye.core.IPreciseBitmap;
-import com.cateye.core.IProgressListener;
+import com.cateye.core.ProgressListener;
 
 public class CompressorStageOperationProcessor
 {
@@ -11,7 +11,7 @@ public class CompressorStageOperationProcessor
 		return 0;
 	}
 
-	public native void process(CompressorStageOperation params, IPreciseBitmap bitmap, IProgressListener progressListener);
+	public native void process(CompressorStageOperation params, IPreciseBitmap bitmap, ProgressListener progressListener);
 
 	static
 	{

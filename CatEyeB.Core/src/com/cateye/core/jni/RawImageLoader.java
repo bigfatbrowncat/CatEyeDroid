@@ -5,7 +5,7 @@ import java.util.Hashtable;
 import java.util.List;
 
 import com.cateye.core.IPreciseBitmap;
-import com.cateye.core.IProgressListener;
+import com.cateye.core.ProgressListener;
 import com.cateye.core.ImageDescription;
 import com.cateye.core.IncorrectImageLoaderRelation;
 import com.cateye.core.jni.PreciseBitmap;
@@ -14,7 +14,7 @@ import com.cateye.core.jni.exceptions.LibRawException;
 public class RawImageLoader
 {
 	// Progress listeners
-	private final List<IProgressListener> progressListeners = new ArrayList<IProgressListener>();
+	private final List<ProgressListener> progressListeners = new ArrayList<ProgressListener>();
 	private boolean divideBy2 = true;
 	
 	private Hashtable<RawImage, String> imageFileNames = new Hashtable<RawImage, String>();
@@ -29,12 +29,12 @@ public class RawImageLoader
 		return divideBy2;
 	}
 	
-	public void addProgressListener(IProgressListener listener)
+	public void addProgressListener(ProgressListener listener)
 	{
 		progressListeners.add(listener);
 	}
 	
-	public void removeProgressListener(IProgressListener listener)
+	public void removeProgressListener(ProgressListener listener)
 	{
 		progressListeners.remove(listener);
 	}
@@ -43,9 +43,9 @@ public class RawImageLoader
 	protected boolean raiseProgress(float progress)
 	{
 		boolean res = true;
-		for (IProgressListener listener : progressListeners)
+		for (ProgressListener listener : progressListeners)
 		{
-			if (!listener.invoke(this, progress)) res = false;
+			if (!listener.reportProgress(progress)) res = false;
 		}
 		return res;
 	}

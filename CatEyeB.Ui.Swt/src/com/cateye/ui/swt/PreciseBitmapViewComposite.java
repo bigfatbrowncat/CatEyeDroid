@@ -38,6 +38,11 @@ public class PreciseBitmapViewComposite extends Composite
 	{
 		return preciseBitmapView;
 	}
+
+	public StatusBarComposite getStatusBarComposite()
+	{
+		return statusBarComposite;
+	}
 	
 	@Override
 	protected void checkSubclass()

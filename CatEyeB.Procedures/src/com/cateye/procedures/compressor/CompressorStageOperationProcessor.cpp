@@ -14,6 +14,14 @@ using namespace std;
 
 #define DEBUG_INFO printf("%d\n", __LINE__);fflush(stdout);
 
+#define JCLASS_PROGRESS_LISTENER								"com/cateye/core/ProgressListener"
+#define JCLASS_PROGRESS_LISTENER_REPORT_PROGRESS				"reportProgress"
+#define JCLASS_PROGRESS_LISTENER_REPORT_PROGRESS_SIGNATURE		"(F)Z"
+
+struct Compress_progressListenerData;
+
+typedef bool progressReporter(void* callerData, float progress);
+
 template <typename T> struct counted_link
 {
 	T* link;
@@ -648,7 +656,8 @@ void SolvePoissonNeiman(arr2<float> I0, arr2<float> rho, int steps_max, float st
 	}
 }
 
-arr2<float> SolvePoissonNeimanMultiLattice(arr2<float> rho, int steps_max, float stop_dpd)
+
+arr2<float> SolvePoissonNeimanMultiLattice(arr2<float> rho, int steps_max, float stop_dpd, progressReporter* reporter, void* reporterCallerData)
 {
 	DEBUG_INFO
 	// Making lower resolutions
@@ -679,6 +688,7 @@ arr2<float> SolvePoissonNeimanMultiLattice(arr2<float> rho, int steps_max, float
 
 		arr2<float> rho_new(ww[p], hh[p]);
 		for (int i = 0; i < w; i++)
+
 		for (int j = 0; j < h; j++)
 		{
 			if ((i / 2 < ww[p]) && (j / 2 < hh[p]))
@@ -686,8 +696,12 @@ arr2<float> SolvePoissonNeimanMultiLattice(arr2<float> rho, int steps_max, float
 		}
 
 		Rho.push_back(rho_new);
+
+		(*reporter)(reporterCallerData, 0.5 * p / divides);
+
 	}
 	DEBUG_INFO
+
 
 	arr2<float> I(Rho[divides].getWidth(), Rho[divides].getHeight());
 
@@ -695,39 +709,48 @@ arr2<float> SolvePoissonNeimanMultiLattice(arr2<float> rho, int steps_max, float
 	{
 		DEBUG_INFO
 		SolvePoissonNeiman(I, Rho[p], steps_max, stop_dpd);
-		/* Delegate was here:
-		 *
-		 * delegate (float progress, float[,] solution)
-				{
-					if (callback != null)
-					{
-						float complete_effort = 0;
-						for (int q = divides; q > p; q--)
-							complete_effort += (float)ww[q] * hh[q];
 
-						float full_effort = complete_effort;
-						for (int q = p; q >= 0; q--)
-							full_effort += (float)ww[q] * hh[q];
-
-						float new_progress = (complete_effort + ww[p] * hh[p] * progress) / full_effort;
-						if (new_progress > old_progress) old_progress = new_progress;
-
-						callback(old_progress, solution);
-					}
-		*/
 
 		if (p > 0)
 		{
 			I = Upsample2(I, ww[p - 1], hh[p - 1]);
 		}
+
+		(*reporter)(reporterCallerData, 0.5 + 0.5 * p / divides);
+
 	}
 
 	DEBUG_INFO
+
+	(*reporter)(reporterCallerData, 1);
+
 	return I;
 }
 
-void Compress(PreciseBitmap bmp, double curve, double noise_gate, double pressure, double contrast, float epsilon, int steps_max)
+struct Compress_SolvePoissonNeimanMultiLattice_progressListenerData
 {
+	Compress_progressListenerData* outerData;
+	progressReporter* outerReporter;
+
+	Compress_SolvePoissonNeimanMultiLattice_progressListenerData(Compress_progressListenerData* outerData, progressReporter* outerReporter) :
+		outerData(outerData), outerReporter(outerReporter)
+	{}
+};
+
+bool Compress_SolvePoissonNeimanMultiLattice_progressReporter(void* callerData, float progress)
+{
+	Compress_SolvePoissonNeimanMultiLattice_progressListenerData& data = *(Compress_SolvePoissonNeimanMultiLattice_progressListenerData*)callerData;
+
+	bool res = (*data.outerReporter)(&data.outerData, 0.2 + 0.8 * progress);
+
+	return res;
+}
+
+
+void Compress(PreciseBitmap bmp, double curve, double noise_gate, double pressure, double contrast, float epsilon, int steps_max, progressReporter* reporter, void* reporterCallerData)
+{
+	Compress_SolvePoissonNeimanMultiLattice_progressListenerData innerData((Compress_progressListenerData*)reporterCallerData, reporter);
+
 	arr2<float> r_chan(bmp.r, bmp.width, bmp.height);
 	arr2<float> g_chan(bmp.g, bmp.width, bmp.height);
 	arr2<float> b_chan(bmp.b, bmp.width, bmp.height);
@@ -749,6 +772,8 @@ void Compress(PreciseBitmap bmp, double curve, double noise_gate, double pressur
 		H(i, j) = (float)(log(light + 0.00001));
 	}
 
+	(*reporter)(reporterCallerData, 0.01);	// reporting 1%
+
 	DEBUG_INFO
 
 	arr2<float> grad_H_x(Hw, Hh);
@@ -764,6 +789,8 @@ void Compress(PreciseBitmap bmp, double curve, double noise_gate, double pressur
 		grad_H_y(i, j) = (float)(H(i, j + 1) - H(i, j));
 	}
 
+	(*reporter)(reporterCallerData, 0.02);	// reporting 2%
+
 	DEBUG_INFO
 
 	// Calculating Phi
@@ -772,17 +799,23 @@ void Compress(PreciseBitmap bmp, double curve, double noise_gate, double pressur
 	DEBUG_INFO
 
 	// Calculating G and div_G
+
 	arr2<float> div_G(Hw, Hh);
 	for (int i = 0; i < Hw - 1; i++)
-	for (int j = 0; j < Hh - 1; j++)
 	{
-		float G_x_ij = grad_H_x(i, j) * Phi(i, j);
-		float G_y_ij = grad_H_y(i, j) * Phi(i, j);
+		for (int j = 0; j < Hh - 1; j++)
+		{
+			float G_x_ij = grad_H_x(i, j) * Phi(i, j);
+			float G_y_ij = grad_H_y(i, j) * Phi(i, j);
 
-		float G_x_ip1j = grad_H_x(i + 1, j) * Phi(i + 1, j);
-		float G_y_ijp1 = grad_H_y(i, j + 1) * Phi(i, j + 1);
+			float G_x_ip1j = grad_H_x(i + 1, j) * Phi(i + 1, j);
+			float G_y_ijp1 = grad_H_y(i, j + 1) * Phi(i, j + 1);
 
-		div_G(i, j) = - (G_x_ij - G_x_ip1j + G_y_ij - G_y_ijp1);
+			div_G(i, j) = - (G_x_ij - G_x_ip1j + G_y_ij - G_y_ijp1);
+		}
+
+		// it should spend 8% to get 10% progress after it's finished
+		(*reporter)(reporterCallerData, 0.02 + 0.08 * i / (Hw - 1));
 	}
 
 	// Preparing the compressor
@@ -805,7 +838,8 @@ void Compress(PreciseBitmap bmp, double curve, double noise_gate, double pressur
 	// Solving Poisson equation Delta I = div G
 	//arr2<float> I(Phi.getWidth(), Phi.getHeight());
 	//SolvePoissonNeiman(I, div_G, steps_max, epsilon);
-	arr2<float> I = SolvePoissonNeimanMultiLattice(div_G, steps_max, epsilon);
+
+	arr2<float> I = SolvePoissonNeimanMultiLattice(div_G, steps_max, epsilon, &Compress_SolvePoissonNeimanMultiLattice_progressReporter, &innerData);
 
 	DEBUG_INFO
 
@@ -834,6 +868,26 @@ void Compress(PreciseBitmap bmp, double curve, double noise_gate, double pressur
 		}
 	}
 
+}
+
+struct Compress_progressListenerData
+{
+	jobject& listener;
+	JNIEnv& env;
+
+	Compress_progressListenerData(jobject& listener, JNIEnv& env) : listener(listener), env(env) {}
+};
+
+bool Compress_progressReporter(void* callerData, float progress)
+{
+	Compress_progressListenerData& data = *(Compress_progressListenerData*)callerData;
+	jclass progressListener_cls = data.env.FindClass(JCLASS_PROGRESS_LISTENER);
+	jmethodID reportProgress_mtd = data.env.GetMethodID(progressListener_cls, JCLASS_PROGRESS_LISTENER_REPORT_PROGRESS, JCLASS_PROGRESS_LISTENER_REPORT_PROGRESS_SIGNATURE);
+
+	// Reporting the progress
+	jboolean res = data.env.CallBooleanMethod(data.listener, reportProgress_mtd, (jfloat)progress);
+
+	return (bool)res;
 }
 
 JNIEXPORT void JNICALL Java_com_cateye_procedures_compressor_CompressorStageOperationProcessor_process
@@ -880,7 +934,9 @@ JNIEXPORT void JNICALL Java_com_cateye_procedures_compressor_CompressorStageOper
 
 	time_t start;
 	time(&start);
-	Compress(bmp, curve, noiseGate, pressure, contrast, 0.003f, 10000);
+
+	Compress_progressListenerData data = Compress_progressListenerData(listener, *env);
+	Compress(bmp, curve, noiseGate, pressure, contrast, 0.003f, 10000, &Compress_progressReporter, &data);
 	time_t end;
 	time(&end);
 

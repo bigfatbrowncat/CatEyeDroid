@@ -232,9 +232,9 @@ extern "C" JNIEXPORT jboolean JNICALL Java_com_cateye_core_jni_PreciseBitmap_get
 			{
 				int r, g, b;
 
-				r = pbmp.r[srcy * pbmp.width + srcx] * brightness,
-				g = pbmp.g[srcy * pbmp.width + srcx] * brightness,
-				b = pbmp.b[srcy * pbmp.width + srcx] * brightness;
+				r = (int)(pbmp.r[srcy * pbmp.width + srcx] * brightness),
+				g = (int)(pbmp.g[srcy * pbmp.width + srcx] * brightness),
+				b = (int)(pbmp.b[srcy * pbmp.width + srcx] * brightness);
 
 				if (r > 255) r = 255;
 				if (g > 255) g = 255;

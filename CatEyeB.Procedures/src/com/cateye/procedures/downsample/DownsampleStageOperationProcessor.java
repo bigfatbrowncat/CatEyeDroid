@@ -1,7 +1,7 @@
 package com.cateye.procedures.downsample;
 
 import com.cateye.core.IPreciseBitmap;
-import com.cateye.core.IProgressListener;
+import com.cateye.core.ProgressListener;
 
 public class DownsampleStageOperationProcessor
 {
@@ -11,7 +11,7 @@ public class DownsampleStageOperationProcessor
 		return 0;
 	}
 
-	public native void process(DownsampleStageOperation params, IPreciseBitmap bitmap, IProgressListener progressListener);
+	public native void process(DownsampleStageOperation params, IPreciseBitmap bitmap, ProgressListener progressListener);
 
 	static
 	{

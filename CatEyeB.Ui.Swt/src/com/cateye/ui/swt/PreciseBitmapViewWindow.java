@@ -4,6 +4,8 @@ import java.io.File;
 import java.io.IOException;
 
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.ShellEvent;
+import org.eclipse.swt.events.ShellListener;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Shell;
@@ -20,11 +22,47 @@ public class PreciseBitmapViewWindow extends Shell
     private String filename;
 	private RawImage image;
 	private MainComposite mainComposite;
+	private volatile boolean closed = false; 
+	
+	ShellListener shellListener = new ShellListener()
+	{
+		
+		@Override
+		public void shellIconified(ShellEvent arg0) {
+			// TODO Auto-generated method stub
+			
+		}
+		
+		@Override
+		public void shellDeiconified(ShellEvent arg0) {
+			// TODO Auto-generated method stub
+			
+		}
+		
+		@Override
+		public void shellDeactivated(ShellEvent arg0) {
+			// TODO Auto-generated method stub
+			
+		}
+		
+		@Override
+		public void shellClosed(ShellEvent arg0) 
+		{
+			closed = true;
+		}
+		
+		@Override
+		public void shellActivated(ShellEvent arg0) {
+			// TODO Auto-generated method stub
+			
+		}
+	};
 	
 	void whenBitmapIsLoaded(IPreciseBitmap bitmap)
 	{
 		ImageProcessor proc = new ImageProcessor();
-		proc.startProcessingAsync(bitmap, new ImageProcessingReporter() {
+		proc.startProcessingAsync(bitmap, new ImageProcessingReporter()
+		{
 			
 			@Override
 			public void reportResult(final IPreciseBitmap result)
@@ -35,15 +73,34 @@ public class PreciseBitmapViewWindow extends Shell
 					@Override
 					public void run() 
 					{
+						mainComposite.getPreciseBitmapViewComposite().getStatusBarComposite().setProgressBarVisibility(false);
+						mainComposite.getPreciseBitmapViewComposite().getStatusBarComposite().setStatusText("Processing complete");
 						mainComposite.getPreciseBitmapViewComposite().getPreciseBitmapView().setPreciseBitmap(result);
 					}
 				});
 			}
 			
 			@Override
-			public boolean reportProgress(float progress)
+			public boolean reportProgress(final float progress)
 			{
-				// TODO Auto-generated method stub
+				getDisplay().syncExec(new Runnable() 
+				{
+					
+					@Override
+					public void run() 
+					{
+						mainComposite.getPreciseBitmapViewComposite().getStatusBarComposite().setProgressBarVisibility(true);
+						mainComposite.getPreciseBitmapViewComposite().getStatusBarComposite().setProgress((int)(progress * 100));
+						mainComposite.getPreciseBitmapViewComposite().getStatusBarComposite().setStatusText("Processing image...");
+					}
+				});
+				
+				if (closed)
+				{
+					// We cancel the process if the window is closed 
+					return false;
+				}
+				
 				return true;
 			}
 		});
@@ -205,5 +262,7 @@ public class PreciseBitmapViewWindow extends Shell
 	{
 		// Disable the check that prevents subclassing of SWT components
 	}
+	
+
 
 }

@@ -1,7 +1,7 @@
 package com.cateye.procedures.rgb;
 
 import com.cateye.core.IPreciseBitmap;
-import com.cateye.core.IProgressListener;
+import com.cateye.core.ProgressListener;
 
 public class RGBStageOperationProcessor
 {
@@ -11,7 +11,7 @@ public class RGBStageOperationProcessor
 		return 0;
 	}
 
-	public native void process(RGBStageOperation params, IPreciseBitmap bitmap, IProgressListener progressListener);
+	public native void process(RGBStageOperation params, IPreciseBitmap bitmap, ProgressListener progressListener);
 
 	static
 	{

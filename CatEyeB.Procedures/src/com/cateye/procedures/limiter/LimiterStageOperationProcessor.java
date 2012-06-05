@@ -1,7 +1,7 @@
 package com.cateye.procedures.limiter;
 
 import com.cateye.core.IPreciseBitmap;
-import com.cateye.core.IProgressListener;
+import com.cateye.core.ProgressListener;
 
 public class LimiterStageOperationProcessor
 {
@@ -11,7 +11,7 @@ public class LimiterStageOperationProcessor
 		return 0;
 	}
 
-	public native void process(LimiterStageOperation params, IPreciseBitmap bitmap, IProgressListener progressListener);
+	public native void process(LimiterStageOperation params, IPreciseBitmap bitmap, ProgressListener progressListener);
 
 	static
 	{
