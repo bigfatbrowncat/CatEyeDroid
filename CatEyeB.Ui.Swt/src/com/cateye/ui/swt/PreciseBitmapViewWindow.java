@@ -21,6 +21,34 @@ public class PreciseBitmapViewWindow extends Shell
 	private RawImage image;
 	private MainComposite mainComposite;
 	
+	void whenBitmapIsLoaded(IPreciseBitmap bitmap)
+	{
+		ImageProcessor proc = new ImageProcessor();
+		proc.startProcessingAsync(bitmap, new ImageProcessingReporter() {
+			
+			@Override
+			public void reportResult(final IPreciseBitmap result)
+			{
+				getDisplay().syncExec(new Runnable() 
+				{
+					
+					@Override
+					public void run() 
+					{
+						mainComposite.getPreciseBitmapViewComposite().getPreciseBitmapView().setPreciseBitmap(result);
+					}
+				});
+			}
+			
+			@Override
+			public boolean reportProgress(float progress)
+			{
+				// TODO Auto-generated method stub
+				return true;
+			}
+		});
+	}
+	
 	ImageLoaderReporter imageLoaderReporter = new ImageLoaderReporter() 
 	{
 		@Override
@@ -34,6 +62,8 @@ public class PreciseBitmapViewWindow extends Shell
 				{
 					mainComposite.getPreciseBitmapViewComposite().getPreciseBitmapView().setPreciseBitmap(preciseBitmap);
 					mainComposite.setActiveScreen(ActiveScreen.View);
+					
+					whenBitmapIsLoaded(preciseBitmap);
 				}
 				
 			});

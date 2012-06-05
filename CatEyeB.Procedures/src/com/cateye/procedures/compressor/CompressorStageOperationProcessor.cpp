@@ -12,7 +12,7 @@
 
 using namespace std;
 
-#define DEBUG_INFO //printf("%d\n", __LINE__);fflush(stdout);
+#define DEBUG_INFO printf("%d\n", __LINE__);fflush(stdout);
 
 template <typename T> struct counted_link
 {

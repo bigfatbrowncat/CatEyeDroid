@@ -33,7 +33,7 @@ public class SwtPreciseBitmapViewCache extends PreciseBitmapViewCache
 		if (!getPreciseBitmap().getPixelsRGBIntoByteBuffer(imageData.data, imageData.bytesPerLine,
 				(int)lt.getX(), (int)lt.getY(), 
 				getViewWidth() / getDownscale(), getViewHeight() / getDownscale(), 
-				1000, 
+				300, 
 				(float)(getImageTransformer().getZoom() / getDownscale()),
 				antialias,
 				new PreciseBitmapGetPixelsCallback() 

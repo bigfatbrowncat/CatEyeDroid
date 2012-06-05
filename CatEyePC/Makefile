@@ -31,7 +31,7 @@ raw:
 jpeg8c:
 	make -C ../jpeg-8c
 	
-core: raw bitmaps
+core: raw bitmaps procedures
 	make -C ../CatEyeB.Core
 
 ui: core
