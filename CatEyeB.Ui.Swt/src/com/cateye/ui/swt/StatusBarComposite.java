@@ -53,7 +53,7 @@ public class StatusBarComposite extends Composite
 		composite.setLayoutData(fd_composite);
 		
 		statusTextLabel = new Label(composite, SWT.HORIZONTAL);
-		statusTextLabel.setLayoutData(new GridData(SWT.LEFT, SWT.CENTER, true, true, 1, 1));
+		statusTextLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, true, 1, 1));
 		statusTextLabel.setText("Ready");
 		statusTextLabel.setCapture(true);
 
@@ -62,6 +62,7 @@ public class StatusBarComposite extends Composite
 	public void setStatusText(String value)
 	{
 		statusTextLabel.setText(value);
+		//this.layout();
 	}
 	
 	public void setProgress(int value)
@@ -72,6 +73,7 @@ public class StatusBarComposite extends Composite
 	public void setProgressBarVisibility(boolean value)
 	{
 		progressBar.setVisible(value);
+		//this.layout();
 	}
 
 	@Override

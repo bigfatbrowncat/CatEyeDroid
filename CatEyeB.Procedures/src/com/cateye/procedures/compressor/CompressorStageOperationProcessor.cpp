@@ -12,15 +12,38 @@
 
 using namespace std;
 
-#define DEBUG_INFO printf("%d\n", __LINE__);fflush(stdout);
+#define DEBUG_INFO //printf("%d\n", __LINE__);fflush(stdout);
 
 #define JCLASS_PROGRESS_LISTENER								"com/cateye/core/ProgressListener"
 #define JCLASS_PROGRESS_LISTENER_REPORT_PROGRESS				"reportProgress"
 #define JCLASS_PROGRESS_LISTENER_REPORT_PROGRESS_SIGNATURE		"(F)Z"
 
 struct Compress_progressListenerData;
-
 typedef bool progressReporter(void* callerData, float progress);
+
+struct innerProgressListenerData
+{
+	Compress_progressListenerData* compressData;
+	progressReporter* outerReporter;
+	float start;
+	float width;
+
+	innerProgressListenerData(Compress_progressListenerData* compressData, progressReporter* outerReporter, float start, float width) :
+		compressData(compressData), outerReporter(outerReporter), start(start), width(width)
+	{}
+};
+
+bool innerProgressReporter(void* callerData, float progress)
+{
+	DEBUG_INFO
+	innerProgressListenerData& data = *(innerProgressListenerData*)callerData;
+
+	DEBUG_INFO
+	bool res = (*data.outerReporter)(data.compressData, data.start + data.width * progress);
+
+	DEBUG_INFO
+	return res;
+}
 
 template <typename T> struct counted_link
 {
@@ -544,7 +567,7 @@ void* PoissonNeimanThread_start(void* data)
 }
 
 
-void SolvePoissonNeiman(arr2<float> I0, arr2<float> rho, int steps_max, float stop_dpd)
+void SolvePoissonNeiman(arr2<float> I0, arr2<float> rho, int steps_max, float stop_dpd, progressReporter* reporter, void* reporterCallerData)
 {
 	DEBUG_INFO
 	int w = rho.getWidth(), h = rho.getHeight();
@@ -570,6 +593,8 @@ void SolvePoissonNeiman(arr2<float> I0, arr2<float> rho, int steps_max, float st
 
 	int threads_num = 16;
 	PoissonNeimanThread** pnthrs = new PoissonNeimanThread*[threads_num];
+
+	float progress_max = 0;
 
 	float delta = 0; float delta_prev = 0;
 	for (int step = 0; step < steps_max; step ++)
@@ -632,6 +657,11 @@ void SolvePoissonNeiman(arr2<float> I0, arr2<float> rho, int steps_max, float st
 
 		// This formula is found experimentally
 		float progress = (float)fmin(pow(stop_dpd / (dpd + 0.000001), 0.78), 0.999);
+
+		// we use it cause progress bar should not move to the lowering direction
+		if (progress_max < progress) progress_max = progress;
+
+		(*reporter)(reporterCallerData, progress_max);
 
 		printf("step #%d, progress: %f\n", step, progress);
 		fflush(stdout);
@@ -697,7 +727,7 @@ arr2<float> SolvePoissonNeimanMultiLattice(arr2<float> rho, int steps_max, float
 
 		Rho.push_back(rho_new);
 
-		(*reporter)(reporterCallerData, 0.5 * p / divides);
+		//(*reporter)(reporterCallerData, 0.5 * (p - 1) / (divides - 1));
 
 	}
 	DEBUG_INFO
@@ -705,18 +735,34 @@ arr2<float> SolvePoissonNeimanMultiLattice(arr2<float> rho, int steps_max, float
 
 	arr2<float> I(Rho[divides].getWidth(), Rho[divides].getHeight());
 
+	float start = 0;
+	float width0 = 1.0 / (divides + 1);
+
+	// Calculating norm
+	float norm = 0;
+	for (int p = divides; p >= 0; p--)
+	{
+		norm += exp(divides - p) * width0;
+	}
+
+
 	for (int p = divides; p >= 0; p--)
 	{
 		DEBUG_INFO
-		SolvePoissonNeiman(I, Rho[p], steps_max, stop_dpd);
 
+		float width = exp(divides - p) * width0 / norm;
+
+		innerProgressListenerData data((Compress_progressListenerData*)reporterCallerData, reporter, start, width);
+		SolvePoissonNeiman(I, Rho[p], steps_max, stop_dpd, &innerProgressReporter, &data);
+
+		start += width;
 
 		if (p > 0)
 		{
 			I = Upsample2(I, ww[p - 1], hh[p - 1]);
 		}
 
-		(*reporter)(reporterCallerData, 0.5 + 0.5 * (divides - p) / divides);
+		//(*reporter)(reporterCallerData, 0.5 + 0.5 * (divides - p) / divides);
 
 	}
 
@@ -725,28 +771,6 @@ arr2<float> SolvePoissonNeimanMultiLattice(arr2<float> rho, int steps_max, float
 	(*reporter)(reporterCallerData, 1);
 
 	return I;
-}
-
-struct Compress_MultiLattice_progressListenerData
-{
-	Compress_progressListenerData* compressData;
-	progressReporter* outerReporter;
-
-	Compress_MultiLattice_progressListenerData(Compress_progressListenerData* compressData, progressReporter* outerReporter) :
-		compressData(compressData), outerReporter(outerReporter)
-	{}
-};
-
-bool Compress_MultiLattice_progressReporter(void* callerData, float progress)
-{
-	DEBUG_INFO
-	Compress_MultiLattice_progressListenerData& multiLatticeData = *(Compress_MultiLattice_progressListenerData*)callerData;
-
-	DEBUG_INFO
-	bool res = (*multiLatticeData.outerReporter)(multiLatticeData.compressData, 0.2 + 0.8 * progress);
-
-	DEBUG_INFO
-	return res;
 }
 
 
@@ -840,8 +864,8 @@ void Compress(PreciseBitmap bmp, double curve, double noise_gate, double pressur
 	//arr2<float> I(Phi.getWidth(), Phi.getHeight());
 	//SolvePoissonNeiman(I, div_G, steps_max, epsilon);
 
-	Compress_MultiLattice_progressListenerData multiLatticeData((Compress_progressListenerData*)reporterCallerData, reporter);
-	arr2<float> I = SolvePoissonNeimanMultiLattice(div_G, steps_max, epsilon, &Compress_MultiLattice_progressReporter, &multiLatticeData);
+	innerProgressListenerData multiLatticeData((Compress_progressListenerData*)reporterCallerData, reporter, 0.1, 0.9);
+	arr2<float> I = SolvePoissonNeimanMultiLattice(div_G, steps_max, epsilon, &innerProgressReporter, &multiLatticeData);
 
 	DEBUG_INFO
 

@@ -1,6 +1,6 @@
 #################### Macros #####################
 
-PROJ = CatEyeB.BasicStageOperations
+PROJ = CatEyeB.Procedures
 
 # CC macros
 COMMON_CFLAGS = -static-libgcc
