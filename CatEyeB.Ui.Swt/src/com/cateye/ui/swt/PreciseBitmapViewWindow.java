@@ -15,6 +15,7 @@ import com.cateye.core.exceptions.ImageLoaderException;
 import com.cateye.core.jni.RawImage;
 import com.cateye.ui.ImageLoaderReporter;
 import com.cateye.ui.ImagesRegistry.LoadingState;
+import com.cateye.ui.swt.ImageProcessor.State;
 import com.cateye.ui.swt.MainComposite.ActiveScreen;
 
 public class PreciseBitmapViewWindow extends Shell
@@ -22,86 +23,148 @@ public class PreciseBitmapViewWindow extends Shell
     private String filename;
 	private RawImage image;
 	private MainComposite mainComposite;
-	private volatile boolean closed = false; 
+	
+	/**
+	 * Flag for other threads and callbacks that the window is going to be closed.
+	 * It should be handled as cancel of all pending operations.
+	 */
+	private volatile boolean closingPending = false; 
+	
+	private ImageProcessor imageProcessor = new ImageProcessor();
+	
+	protected boolean canCloseNow()
+	{
+		// The only cause which prevents us from closing now is image processing
+		
+		if (imageProcessor.getState() == State.Idle)
+			return true;
+		else
+			return false;
+	}
+	
+	/**
+	 * Tries to close the shell until it accepts to be closed.
+	 * @return thread which spams the shell with close() method every 100 msec.
+	 */
+	protected Thread closeASAP()
+	{
+		Thread closureThread = new Thread() 
+		{
+			public void run() 
+			{
+				// While window is alive, trying to close it.
+				while (!isDisposed())
+				{
+					// Sending "close" message
+					getDisplay().syncExec(new Runnable() 
+					{
+						
+						@Override
+						public void run() 
+						{
+							close();
+						}
+					});
+					
+					// Waiting for the next train to arrive...
+					try 
+					{
+						Thread.sleep(100);
+					}
+					catch (InterruptedException e) 
+					{
+						break; // If someone cancels our thread... who knows!
+					}
+				}
+			};
+		};
+		closureThread.start();
+		
+		return closureThread;
+	}
 	
 	ShellListener shellListener = new ShellListener()
 	{
-		
-		@Override
-		public void shellIconified(ShellEvent arg0) {
-			// TODO Auto-generated method stub
-			
-		}
-		
-		@Override
-		public void shellDeiconified(ShellEvent arg0) {
-			// TODO Auto-generated method stub
-			
-		}
-		
-		@Override
-		public void shellDeactivated(ShellEvent arg0) {
-			// TODO Auto-generated method stub
-			
-		}
-		
 		@Override
 		public void shellClosed(ShellEvent arg0) 
 		{
-			closed = true;
+			// Setting this variable to notify all the other threads
+			closingPending = true;
+			
+			if (canCloseNow())
+			{
+				// Just closing the shell.
+				arg0.doit = true;
+			}
+			else
+			{
+				// If we can't close the shell immediately, starting the 
+				// thread which will close it ASAP
+				closeASAP();
+				
+				arg0.doit = false;
+			}
 		}
 		
 		@Override
-		public void shellActivated(ShellEvent arg0) {
-			// TODO Auto-generated method stub
-			
-		}
+		public void shellActivated(ShellEvent arg0) {}
+		@Override
+		public void shellIconified(ShellEvent arg0) {}
+		@Override
+		public void shellDeiconified(ShellEvent arg0) {}
+		@Override
+		public void shellDeactivated(ShellEvent arg0) {}
 	};
 	
 	void whenBitmapIsLoaded(IPreciseBitmap bitmap)
 	{
-		ImageProcessor proc = new ImageProcessor();
-		proc.startProcessingAsync(bitmap, new ImageProcessingReporter()
+		imageProcessor.startProcessingAsync(bitmap, new ImageProcessingReporter()
 		{
 			
 			@Override
 			public void reportResult(final IPreciseBitmap result)
 			{
-				getDisplay().syncExec(new Runnable() 
+				if (!isDisposed())
 				{
-					
-					@Override
-					public void run() 
+					getDisplay().syncExec(new Runnable() 
 					{
-						mainComposite.getPreciseBitmapViewComposite().getStatusBarComposite().setProgressBarVisibility(false);
-						mainComposite.getPreciseBitmapViewComposite().getStatusBarComposite().setStatusText("Processing complete");
-						mainComposite.getPreciseBitmapViewComposite().getPreciseBitmapView().setPreciseBitmap(result);
-					}
-				});
+						
+						@Override
+						public void run() 
+						{
+							mainComposite.getPreciseBitmapViewComposite().getStatusBarComposite().setProgressBarVisibility(false);
+							mainComposite.getPreciseBitmapViewComposite().getStatusBarComposite().setStatusText("Processing complete");
+							mainComposite.getPreciseBitmapViewComposite().getPreciseBitmapView().setPreciseBitmap(result);
+						}
+					});
+				}
 			}
 			
 			@Override
 			public boolean reportProgress(final float progress)
 			{
-				getDisplay().syncExec(new Runnable() 
-				{
-					
-					@Override
-					public void run() 
-					{
-						mainComposite.getPreciseBitmapViewComposite().getStatusBarComposite().setProgressBarVisibility(true);
-						mainComposite.getPreciseBitmapViewComposite().getStatusBarComposite().setProgress((int)(progress * 100));
-						mainComposite.getPreciseBitmapViewComposite().getStatusBarComposite().setStatusText("Processing image...");
-					}
-				});
-				
-				if (closed)
+				if (closingPending || isDisposed())
 				{
 					// We cancel the process if the window is closed 
 					return false;
 				}
-				
-				return true;
+				else
+				{
+					// Showing the current progress in the status bar
+					getDisplay().syncExec(new Runnable() 
+					{
+						
+						@Override
+						public void run() 
+						{
+							mainComposite.getPreciseBitmapViewComposite().getStatusBarComposite().setProgressBarVisibility(true);
+							mainComposite.getPreciseBitmapViewComposite().getStatusBarComposite().setProgress((int)(progress * 100));
+							mainComposite.getPreciseBitmapViewComposite().getStatusBarComposite().setStatusText("Processing image...");
+						}
+					});
+
+					return true;
+				}
 			}
 		});
 	}
@@ -111,33 +174,38 @@ public class PreciseBitmapViewWindow extends Shell
 		@Override
 		public void reportSuccess(final IPreciseBitmap preciseBitmap)
 		{
-			getDisplay().syncExec(new Runnable() 
+			if (!isDisposed())
 			{
-				
-				@Override
-				public void run() 
+				getDisplay().syncExec(new Runnable() 
 				{
-					mainComposite.getPreciseBitmapViewComposite().getPreciseBitmapView().setPreciseBitmap(preciseBitmap);
-					mainComposite.setActiveScreen(ActiveScreen.View);
 					
-					whenBitmapIsLoaded(preciseBitmap);
-				}
-				
-			});
+					@Override
+					public void run() 
+					{
+						mainComposite.getPreciseBitmapViewComposite().getPreciseBitmapView().setPreciseBitmap(preciseBitmap);
+						mainComposite.setActiveScreen(ActiveScreen.View);
+						
+						whenBitmapIsLoaded(preciseBitmap);
+					}
+					
+				});
+			}
 		}
 		
 		@Override
 		public void reportException(final ImageLoaderException e)
 		{
-			getDisplay().syncExec(new Runnable()
+			if (!isDisposed())
 			{
-				@Override
-				public void run() 
+				getDisplay().syncExec(new Runnable()
 				{
-					System.out.print("error");
-					showError("Can't open the file " + filename + ".\n" + e.getMessage());
-				}
-			});			
+					@Override
+					public void run() 
+					{
+						showError("Can't open the file " + filename + ".\n" + e.getMessage());
+					}
+				});
+			}
 		}
 
 		@Override
@@ -159,18 +227,6 @@ public class PreciseBitmapViewWindow extends Shell
 		}
 	};
 	
-	private void prepareContent()
-	{
-		setText("CatEye");
-		setSize(800, 600);
-		setMinimumSize(320, 240);
-		
-		setLayout(new FillLayout());
-
-		// Creating the main widget
-		mainComposite = new MainComposite(this, SWT.NONE);
-	}
-
 	private void showError(String message)
 	{
 		MessageBox err = new MessageBox(PreciseBitmapViewWindow.this, SWT.ERROR);
@@ -254,7 +310,17 @@ public class PreciseBitmapViewWindow extends Shell
 	
 	public PreciseBitmapViewWindow() 
 	{
-		prepareContent();
+		setText("CatEye");
+		setSize(800, 600);
+		setMinimumSize(320, 240);
+		
+		setLayout(new FillLayout());
+
+		// Creating the main widget
+		mainComposite = new MainComposite(this, SWT.NONE);
+		
+		// Adding listeners
+		addShellListener(shellListener);
 	}
 	
 	@Override

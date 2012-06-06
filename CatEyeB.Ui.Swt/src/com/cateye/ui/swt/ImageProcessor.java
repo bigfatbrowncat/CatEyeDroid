@@ -9,11 +9,12 @@ import com.cateye.procedures.compressor.CompressorStageOperationProcessor;
 
 public class ImageProcessor
 {
-	private enum State { Idle, Working }
-/*	private IPreciseBitmap sourcePreciseBitmap = null;*/
+	public enum State { Idle, Working }
 	private IPreciseBitmap resultPreciseBitmap = null;
 	private ArrayList<ImageProcessingReporter> reporters = new ArrayList<ImageProcessingReporter>(); 
 	private State state = State.Idle;
+	
+	public State getState() { return state; }
 	
 	private void doProcessing(IPreciseBitmap sourcePreciseBitmap)
 	{
@@ -31,28 +32,39 @@ public class ImageProcessor
 		// Creating an image for the new result
 		
 		resultPreciseBitmap = sourcePreciseBitmap.copy();
-		System.out.print("Copy succeeded");
 		
-		csop.process(cso, resultPreciseBitmap, new ProgressListener() 
-		{
-			@Override
-			public boolean reportProgress(float progress) {
-				// Report the processing progress. 
-				// If any of the listeners return false, we return false. That will mean "cancel"
-
-				boolean result = true;
-				for (ImageProcessingReporter rpt : reporters)
+		if (csop.process(cso, resultPreciseBitmap, new ProgressListener() 
+			{
+				@Override
+				public boolean reportProgress(float progress)
 				{
-					if (!rpt.reportProgress(progress)) result = false;
+					// Report the processing progress. 
+					// If any of the listeners return false, we return false. That will mean "cancel"
+	
+					boolean result = true;
+					for (ImageProcessingReporter rpt : reporters)
+					{
+						if (!rpt.reportProgress(progress))
+						{
+							result = false;
+						}
+					}
+					return result;
 				}
-				return result;
-			}
-		});
-		
-		for (ImageProcessingReporter rpt : reporters)
+			}))
 		{
-			rpt.reportResult(resultPreciseBitmap);
+			for (ImageProcessingReporter rpt : reporters)
+			{
+				rpt.reportResult(resultPreciseBitmap);
+			}
+			
 		}
+		else
+		{
+			System.out.print("Processing cancelled.\n");
+			
+		}
+		
 		state = State.Idle;
 	}
 	

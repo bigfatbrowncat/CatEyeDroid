@@ -567,7 +567,7 @@ void* PoissonNeimanThread_start(void* data)
 }
 
 
-void SolvePoissonNeiman(arr2<float> I0, arr2<float> rho, int steps_max, float stop_dpd, progressReporter* reporter, void* reporterCallerData)
+bool SolvePoissonNeiman(arr2<float> I0, arr2<float> rho, int steps_max, float stop_dpd, progressReporter* reporter, void* reporterCallerData)
 {
 	DEBUG_INFO
 	int w = rho.getWidth(), h = rho.getHeight();
@@ -661,7 +661,10 @@ void SolvePoissonNeiman(arr2<float> I0, arr2<float> rho, int steps_max, float st
 		// we use it cause progress bar should not move to the lowering direction
 		if (progress_max < progress) progress_max = progress;
 
-		(*reporter)(reporterCallerData, progress_max);
+		if (!(*reporter)(reporterCallerData, progress_max))
+		{
+			return false;
+		}
 
 		printf("step #%d, progress: %f\n", step, progress);
 		fflush(stdout);
@@ -684,6 +687,8 @@ void SolvePoissonNeiman(arr2<float> I0, arr2<float> rho, int steps_max, float st
 	{
 		I0(i - 1, j - 1) = I(i, j);
 	}
+
+	return true;
 }
 
 
@@ -753,7 +758,10 @@ arr2<float> SolvePoissonNeimanMultiLattice(arr2<float> rho, int steps_max, float
 		float width = exp(divides - p) * width0 / norm;
 
 		innerProgressListenerData data((Compress_progressListenerData*)reporterCallerData, reporter, start, width);
-		SolvePoissonNeiman(I, Rho[p], steps_max, stop_dpd, &innerProgressReporter, &data);
+		if (!SolvePoissonNeiman(I, Rho[p], steps_max, stop_dpd, &innerProgressReporter, &data))
+		{
+			return arr2<float>(0, 0);
+		}
 
 		start += width;
 
@@ -774,7 +782,7 @@ arr2<float> SolvePoissonNeimanMultiLattice(arr2<float> rho, int steps_max, float
 }
 
 
-void Compress(PreciseBitmap bmp, double curve, double noise_gate, double pressure, double contrast, float epsilon, int steps_max, progressReporter* reporter, void* reporterCallerData)
+bool Compress(PreciseBitmap bmp, double curve, double noise_gate, double pressure, double contrast, float epsilon, int steps_max, progressReporter* reporter, void* reporterCallerData)
 {
 	arr2<float> r_chan(bmp.r, bmp.width, bmp.height);
 	arr2<float> g_chan(bmp.g, bmp.width, bmp.height);
@@ -866,6 +874,11 @@ void Compress(PreciseBitmap bmp, double curve, double noise_gate, double pressur
 
 	innerProgressListenerData multiLatticeData((Compress_progressListenerData*)reporterCallerData, reporter, 0.1, 0.9);
 	arr2<float> I = SolvePoissonNeimanMultiLattice(div_G, steps_max, epsilon, &innerProgressReporter, &multiLatticeData);
+	if (I.getWidth() == 0 && I.getHeight() == 0)
+	{
+		// This case means that we got user cancel.
+		return false;
+	}
 
 	DEBUG_INFO
 
@@ -886,14 +899,12 @@ void Compress(PreciseBitmap bmp, double curve, double noise_gate, double pressur
 
 		double L = exp(I(i1, j1)) * Lcomp;
 
-		//lock (this)
-		{
-			bmp.r[j * bmp.width + i] = (float)(bmp.r[j * bmp.width + i] * L / (Lold + 0.00001));
-			bmp.g[j * bmp.width + i] = (float)(bmp.g[j * bmp.width + i] * L / (Lold + 0.00001));
-			bmp.b[j * bmp.width + i] = (float)(bmp.b[j * bmp.width + i] * L / (Lold + 0.00001));
-		}
+		bmp.r[j * bmp.width + i] = (float)(bmp.r[j * bmp.width + i] * L / (Lold + 0.00001));
+		bmp.g[j * bmp.width + i] = (float)(bmp.g[j * bmp.width + i] * L / (Lold + 0.00001));
+		bmp.b[j * bmp.width + i] = (float)(bmp.b[j * bmp.width + i] * L / (Lold + 0.00001));
 	}
 
+	return true;
 }
 
 struct Compress_progressListenerData
@@ -919,7 +930,7 @@ bool Compress_progressReporter(void* callerData, float progress)
 	return (bool)res;
 }
 
-JNIEXPORT void JNICALL Java_com_cateye_procedures_compressor_CompressorStageOperationProcessor_process
+JNIEXPORT jboolean JNICALL Java_com_cateye_procedures_compressor_CompressorStageOperationProcessor_process
   (JNIEnv * env, jobject obj, jobject params, jobject bitmap, jobject listener)
 {
 	// Getting the class
@@ -965,13 +976,17 @@ JNIEXPORT void JNICALL Java_com_cateye_procedures_compressor_CompressorStageOper
 	time(&start);
 
 	Compress_progressListenerData data = Compress_progressListenerData(listener, *env);
-	Compress(bmp, curve, noiseGate, pressure, contrast, 0.003f, 10000, &Compress_progressReporter, &data);
+	if (!Compress(bmp, curve, noiseGate, pressure, contrast, 0.003f, 10000, &Compress_progressReporter, &data))
+	{
+		printf("User canceled the operation!\n");	fflush(stdout);
+
+		return false;
+	}
 	time_t end;
 	time(&end);
 
 	printf("time spent on compressing: %d seconds\n", end - start);
 	fflush(stdout);
 
-	//Compress(bmp, 0.2, 0.01, 0.05, 0.85, 0.001f, 20000);
-
+	return true;
 }

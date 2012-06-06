@@ -11,7 +11,7 @@ public class CompressorStageOperationProcessor
 		return 0;
 	}
 
-	public native void process(CompressorStageOperation params, IPreciseBitmap bitmap, ProgressListener progressListener);
+	public native boolean process(CompressorStageOperation params, IPreciseBitmap bitmap, ProgressListener progressListener);
 
 	static
 	{
