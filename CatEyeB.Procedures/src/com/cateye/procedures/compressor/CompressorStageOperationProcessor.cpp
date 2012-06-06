@@ -716,7 +716,7 @@ arr2<float> SolvePoissonNeimanMultiLattice(arr2<float> rho, int steps_max, float
 			I = Upsample2(I, ww[p - 1], hh[p - 1]);
 		}
 
-		(*reporter)(reporterCallerData, 0.5 + 0.5 * p / divides);
+		(*reporter)(reporterCallerData, 0.5 + 0.5 * (divides - p) / divides);
 
 	}
 
@@ -727,30 +727,31 @@ arr2<float> SolvePoissonNeimanMultiLattice(arr2<float> rho, int steps_max, float
 	return I;
 }
 
-struct Compress_SolvePoissonNeimanMultiLattice_progressListenerData
+struct Compress_MultiLattice_progressListenerData
 {
-	Compress_progressListenerData* outerData;
+	Compress_progressListenerData* compressData;
 	progressReporter* outerReporter;
 
-	Compress_SolvePoissonNeimanMultiLattice_progressListenerData(Compress_progressListenerData* outerData, progressReporter* outerReporter) :
-		outerData(outerData), outerReporter(outerReporter)
+	Compress_MultiLattice_progressListenerData(Compress_progressListenerData* compressData, progressReporter* outerReporter) :
+		compressData(compressData), outerReporter(outerReporter)
 	{}
 };
 
-bool Compress_SolvePoissonNeimanMultiLattice_progressReporter(void* callerData, float progress)
+bool Compress_MultiLattice_progressReporter(void* callerData, float progress)
 {
-	Compress_SolvePoissonNeimanMultiLattice_progressListenerData& data = *(Compress_SolvePoissonNeimanMultiLattice_progressListenerData*)callerData;
+	DEBUG_INFO
+	Compress_MultiLattice_progressListenerData& multiLatticeData = *(Compress_MultiLattice_progressListenerData*)callerData;
 
-	bool res = (*data.outerReporter)(&data.outerData, 0.2 + 0.8 * progress);
+	DEBUG_INFO
+	bool res = (*multiLatticeData.outerReporter)(multiLatticeData.compressData, 0.2 + 0.8 * progress);
 
+	DEBUG_INFO
 	return res;
 }
 
 
 void Compress(PreciseBitmap bmp, double curve, double noise_gate, double pressure, double contrast, float epsilon, int steps_max, progressReporter* reporter, void* reporterCallerData)
 {
-	Compress_SolvePoissonNeimanMultiLattice_progressListenerData innerData((Compress_progressListenerData*)reporterCallerData, reporter);
-
 	arr2<float> r_chan(bmp.r, bmp.width, bmp.height);
 	arr2<float> g_chan(bmp.g, bmp.width, bmp.height);
 	arr2<float> b_chan(bmp.b, bmp.width, bmp.height);
@@ -839,7 +840,8 @@ void Compress(PreciseBitmap bmp, double curve, double noise_gate, double pressur
 	//arr2<float> I(Phi.getWidth(), Phi.getHeight());
 	//SolvePoissonNeiman(I, div_G, steps_max, epsilon);
 
-	arr2<float> I = SolvePoissonNeimanMultiLattice(div_G, steps_max, epsilon, &Compress_SolvePoissonNeimanMultiLattice_progressReporter, &innerData);
+	Compress_MultiLattice_progressListenerData multiLatticeData((Compress_progressListenerData*)reporterCallerData, reporter);
+	arr2<float> I = SolvePoissonNeimanMultiLattice(div_G, steps_max, epsilon, &Compress_MultiLattice_progressReporter, &multiLatticeData);
 
 	DEBUG_INFO
 
@@ -880,13 +882,16 @@ struct Compress_progressListenerData
 
 bool Compress_progressReporter(void* callerData, float progress)
 {
+	DEBUG_INFO
 	Compress_progressListenerData& data = *(Compress_progressListenerData*)callerData;
 	jclass progressListener_cls = data.env.FindClass(JCLASS_PROGRESS_LISTENER);
 	jmethodID reportProgress_mtd = data.env.GetMethodID(progressListener_cls, JCLASS_PROGRESS_LISTENER_REPORT_PROGRESS, JCLASS_PROGRESS_LISTENER_REPORT_PROGRESS_SIGNATURE);
 
+	DEBUG_INFO
 	// Reporting the progress
 	jboolean res = data.env.CallBooleanMethod(data.listener, reportProgress_mtd, (jfloat)progress);
 
+	DEBUG_INFO
 	return (bool)res;
 }
 
