@@ -16,6 +16,7 @@ import com.cateye.core.jni.RawImageLoader;
 
 public class ImagesRegistry
 {
+	public enum State { Idle, Working }
 	public enum LoadingState { NotLoadedYet, LoadingInProgress, Loaded, LoadingError }
 	
 	private RawImageLoader imageLoader = new RawImageLoader();
@@ -25,6 +26,23 @@ public class ImagesRegistry
 	private Map<RawImage, IPreciseBitmap> loadedBitmaps = Collections.synchronizedMap(new HashMap<RawImage, IPreciseBitmap>());
 	
 	private ImageLoaderReporters reporters = new ImageLoaderReporters();
+	
+	/**
+	 * Checks if the registry is loading anything right now.
+	 * @return If any image is loading now, returns <code>State.Working</code> 
+	 * else returns <code>State.Idle</code>
+	 */
+	public State getState()
+	{
+		for (Map.Entry<RawImage, LoadingState> state : loadingStates.entrySet())
+		{
+			if (state.getValue() == LoadingState.LoadingInProgress)
+			{
+				return State.Working;
+			}
+		}
+		return State.Idle;
+	}
 	
 	public RawImage requestOrLoadImage(String filename) throws IOException
 	{

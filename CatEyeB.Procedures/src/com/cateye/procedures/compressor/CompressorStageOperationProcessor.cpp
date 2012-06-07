@@ -12,7 +12,7 @@
 
 using namespace std;
 
-#define DEBUG_INFO //printf("%d\n", __LINE__);fflush(stdout);
+#define DEBUG_INFO printf("%d\n", __LINE__);fflush(stdout);
 
 #define JCLASS_PROGRESS_LISTENER								"com/cateye/core/ProgressListener"
 #define JCLASS_PROGRESS_LISTENER_REPORT_PROGRESS				"reportProgress"
@@ -805,7 +805,11 @@ bool Compress(PreciseBitmap bmp, double curve, double noise_gate, double pressur
 		H(i, j) = (float)(log(light + 0.00001));
 	}
 
-	(*reporter)(reporterCallerData, 0.01);	// reporting 1%
+	if (!(*reporter)(reporterCallerData, 0.01)) // reporting 1%
+	{
+		printf("HERE 1!\n"); fflush(stdout);
+		return false;
+	}
 
 	DEBUG_INFO
 
@@ -822,7 +826,11 @@ bool Compress(PreciseBitmap bmp, double curve, double noise_gate, double pressur
 		grad_H_y(i, j) = (float)(H(i, j + 1) - H(i, j));
 	}
 
-	(*reporter)(reporterCallerData, 0.02);	// reporting 2%
+	if (!(*reporter)(reporterCallerData, 0.02)) // reporting 2%
+	{
+		printf("HERE 2!\n"); fflush(stdout);
+		return false;
+	}
 
 	DEBUG_INFO
 
@@ -848,7 +856,11 @@ bool Compress(PreciseBitmap bmp, double curve, double noise_gate, double pressur
 		}
 
 		// it should spend 8% to get 10% progress after it's finished
-		(*reporter)(reporterCallerData, 0.02 + 0.08 * i / (Hw - 1));
+		if ((i % 100 == 0) && (!(*reporter)(reporterCallerData, 0.02 + 0.08 * i / (Hw - 1))))
+		{
+			printf("HERE 3!\n"); fflush(stdout);
+			return false;
+		}
 	}
 
 	// Preparing the compressor

@@ -41,14 +41,17 @@ public class PreciseBitmapView extends Composite
 			if (cache[HQ].update())
 			{
 	        	activeImageIndex = HQ;
-	        	getDisplay().asyncExec(new Runnable() 
+	        	if (!isDisposed())
 	        	{
-					@Override
-					public void run() 
-					{
-						PreciseBitmapView.this.redraw();
-					}
-				});
+		        	getDisplay().asyncExec(new Runnable() 
+		        	{
+						@Override
+						public void run() 
+						{
+							PreciseBitmapView.this.redraw();
+						}
+					});
+	        	}
 	        }
 		}
 	};

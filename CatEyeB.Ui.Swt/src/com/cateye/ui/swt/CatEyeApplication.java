@@ -46,6 +46,23 @@ public class CatEyeApplication
 			mainWindow.openWithFile(args[0]);
 		}
 
+		/*
+		if (getInstance().getRegistry().getState() == State.Working)
+		{
+			System.out.println("Registry is busy now. Let's wait for it...");
+			while (getInstance().getRegistry().getState() == State.Working)
+			{
+				try {
+					Thread.sleep(100);
+				} 
+				catch (InterruptedException e)
+				{
+					e.printStackTrace();
+					break;	// If someone tries to finish us immediately, let him do it
+				}
+			}
+		}*/
+		
 		System.out.println("CatEye finished");
 	}
 }

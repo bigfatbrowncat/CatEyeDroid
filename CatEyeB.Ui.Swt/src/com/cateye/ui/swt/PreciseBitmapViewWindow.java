@@ -15,7 +15,6 @@ import com.cateye.core.exceptions.ImageLoaderException;
 import com.cateye.core.jni.RawImage;
 import com.cateye.ui.ImageLoaderReporter;
 import com.cateye.ui.ImagesRegistry.LoadingState;
-import com.cateye.ui.swt.ImageProcessor.State;
 import com.cateye.ui.swt.MainComposite.ActiveScreen;
 
 public class PreciseBitmapViewWindow extends Shell
@@ -23,6 +22,24 @@ public class PreciseBitmapViewWindow extends Shell
     private String filename;
 	private RawImage image;
 	private MainComposite mainComposite;
+	
+	protected void callFromUi(final Runnable r)
+	{
+		if (!isDisposed() && !getDisplay().isDisposed())
+		{
+			getDisplay().syncExec(new Runnable()
+			{
+				@Override
+				public void run() 
+				{
+					if (!isDisposed())
+					{
+						r.run();
+					}
+				}
+			});
+		}
+	}
 	
 	/**
 	 * Flag for other threads and callbacks that the window is going to be closed.
@@ -36,8 +53,11 @@ public class PreciseBitmapViewWindow extends Shell
 	{
 		// The only cause which prevents us from closing now is image processing
 		
-		if (imageProcessor.getState() == State.Idle)
+		if (imageProcessor.getState() == ImageProcessor.State.Idle && 
+			CatEyeApplication.getInstance().getRegistry().getState() == com.cateye.ui.ImagesRegistry.State.Idle)
+		{
 			return true;
+		}
 		else
 			return false;
 	}
@@ -88,9 +108,6 @@ public class PreciseBitmapViewWindow extends Shell
 		@Override
 		public void shellClosed(ShellEvent arg0) 
 		{
-			// Setting this variable to notify all the other threads
-			closingPending = true;
-			
 			if (canCloseNow())
 			{
 				// Just closing the shell.
@@ -100,10 +117,13 @@ public class PreciseBitmapViewWindow extends Shell
 			{
 				// If we can't close the shell immediately, starting the 
 				// thread which will close it ASAP
-				closeASAP();
-				
+				System.out.print("Closure scheduled");
+				if (!closingPending) closeASAP();
 				arg0.doit = false;
 			}
+
+			// Setting this variable to notify all the other threads
+			closingPending = true;
 		}
 		
 		@Override
@@ -116,7 +136,7 @@ public class PreciseBitmapViewWindow extends Shell
 		public void shellDeactivated(ShellEvent arg0) {}
 	};
 	
-	void whenBitmapIsLoaded(IPreciseBitmap bitmap)
+	void startBitmapProcessing(IPreciseBitmap bitmap)
 	{
 		imageProcessor.startProcessingAsync(bitmap, new ImageProcessingReporter()
 		{
@@ -174,22 +194,18 @@ public class PreciseBitmapViewWindow extends Shell
 		@Override
 		public void reportSuccess(final IPreciseBitmap preciseBitmap)
 		{
-			if (!isDisposed())
+			callFromUi(new Runnable() 
 			{
-				getDisplay().syncExec(new Runnable() 
+				@Override
+				public void run() 
 				{
+					mainComposite.getPreciseBitmapViewComposite().getPreciseBitmapView().setPreciseBitmap(preciseBitmap);
+					mainComposite.setActiveScreen(ActiveScreen.View);
 					
-					@Override
-					public void run() 
-					{
-						mainComposite.getPreciseBitmapViewComposite().getPreciseBitmapView().setPreciseBitmap(preciseBitmap);
-						mainComposite.setActiveScreen(ActiveScreen.View);
-						
-						whenBitmapIsLoaded(preciseBitmap);
-					}
-					
-				});
-			}
+					startBitmapProcessing(preciseBitmap);
+				}
+				
+			});
 		}
 		
 		@Override
@@ -211,19 +227,22 @@ public class PreciseBitmapViewWindow extends Shell
 		@Override
 		public void reportProgress(final int progress)
 		{
-			getDisplay().syncExec(new Runnable() {
-
-				@Override
-				public void run() 
-				{
-					mainComposite.getLoadingScreen().setProgress((int)(progress * 100));
-					if (mainComposite.getActiveScreen() != ActiveScreen.Loading)
+			if (!isDisposed())
+			{
+				getDisplay().syncExec(new Runnable() {
+	
+					@Override
+					public void run() 
 					{
-						mainComposite.setActiveScreen(ActiveScreen.Loading);
+						mainComposite.getLoadingScreen().setProgress((int)(progress * 100));
+						if (mainComposite.getActiveScreen() != ActiveScreen.Loading)
+						{
+							mainComposite.setActiveScreen(ActiveScreen.Loading);
+						}
 					}
-				}
-
-			});
+	
+				});
+			}
 		}
 	};
 	
