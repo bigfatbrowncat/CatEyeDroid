@@ -27,7 +27,7 @@ public class CatEyeApplication
 	public static void main(String[] args)
 	{
 		// Entry point. Creating the main window
-		PreciseBitmapViewWindow mainWindow = new PreciseBitmapViewWindow();
+		ImageWindow mainWindow = new ImageWindow();
 		
 		if (args.length == 0)
 		{

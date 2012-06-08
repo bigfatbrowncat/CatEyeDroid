@@ -11,7 +11,7 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.ProgressBar;
 
-public class LoadingScreenComposite extends Composite 
+public class LoadingPageComposite extends Composite 
 {
 	Label lblFileName;
 	ProgressBar progressBar;
@@ -21,7 +21,7 @@ public class LoadingScreenComposite extends Composite
 	 * @param parent
 	 * @param style
 	 */
-	public LoadingScreenComposite(Composite parent, int style) 
+	public LoadingPageComposite(Composite parent, int style) 
 	{
 		super(parent, style);
 		setLayout(new GridLayout(1, false));

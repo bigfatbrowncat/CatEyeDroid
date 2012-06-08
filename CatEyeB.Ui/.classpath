@@ -6,6 +6,5 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/CatEyeB.Core"/>
 	<classpathentry kind="lib" path="/external/jar/classpath.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/CatEyeB.Procedures"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/CatEyeB.Ui"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

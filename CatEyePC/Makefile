@@ -4,7 +4,7 @@ ARCH = i386
 
 EMBEDDED_TARGET_NAME = CatEye
 
-all: bitmaps raw jpeg8c core colorlib procedures ui avian_embed
+all: bitmaps raw jpeg8c core colorlib procedures ui ui_swt avian_embed
 
 clean:
 	make -C ../colorlib clean
@@ -34,10 +34,13 @@ core: raw bitmaps
 procedures: core colorlib
 	make -C ../CatEyeB.Procedures
 
-ui: core
+ui: core procedures
+	make -C ../CatEyeB.Ui
+
+ui_swt: core ui
 	make -C ../CatEyeB.Ui.Swt
 	
-avian_embed: ui
+avian_embed: ui_swt
 	# Here we implement the default Avian embedding procedure
 	mkdir -p bin/embedded; \
 	cd bin/embedded; \
@@ -61,5 +64,5 @@ avian_embed: ui
     mv -f $(EMBEDDED_TARGET_NAME).exe ../
     #strip --strip-all $(EMBEDDED_TARGET_NAME).exe
 	
-.PHONY: all bitmaps raw jpeg8c core clean colorlib procedures ui avian_embed
+.PHONY: all bitmaps raw jpeg8c core clean colorlib procedures ui ui_swt avian_embed
 .SILENT:

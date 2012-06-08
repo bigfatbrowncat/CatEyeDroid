@@ -21,10 +21,10 @@ public class PreciseBitmapView extends Composite
 	private IPreciseBitmap preciseBitmap;
 	private RestrictedImageCoordinatesTransformer imageTransformer = new RestrictedImageCoordinatesTransformer();
 	private boolean down;
-	private SwtPreciseBitmapViewCache[] cache = new SwtPreciseBitmapViewCache[]
+	private PreciseBitmapViewCache[] cache = new PreciseBitmapViewCache[]
 	{
-		new SwtPreciseBitmapViewCache(2, false, imageTransformer),	
-		new SwtPreciseBitmapViewCache(1, true, imageTransformer)	
+		new PreciseBitmapViewCache(2, false, imageTransformer),	
+		new PreciseBitmapViewCache(1, true, imageTransformer)	
 	};
     private static final int LQ = 0; 
     private static final int HQ = 1;

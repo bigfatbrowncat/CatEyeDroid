@@ -6,15 +6,14 @@ import android.graphics.Rect;
 import com.cateye.core.ImageCoordinatesTransformer;
 import com.cateye.core.PointD;
 import com.cateye.core.PreciseBitmapGetPixelsCallback;
-import com.cateye.core.PreciseBitmapViewCache;
 import android.graphics.Canvas;
 
-public class AndroidPreciseBitmapViewCache extends PreciseBitmapViewCache
+public class PreciseBitmapViewCache extends com.cateye.core.PreciseBitmapViewCache
 {
 	private Bitmap image;
     private int[] pixels;
 
-    public AndroidPreciseBitmapViewCache(int downscale, ImageCoordinatesTransformer imageTransformer)
+    public PreciseBitmapViewCache(int downscale, ImageCoordinatesTransformer imageTransformer)
     {
 		super(downscale, imageTransformer);
 	}
@@ -32,13 +31,15 @@ public class AndroidPreciseBitmapViewCache extends PreciseBitmapViewCache
 				(float)(getImageTransformer().getZoom() / getDownscale()), 
 				new PreciseBitmapGetPixelsCallback() 
 				{
-					@Override
 					public boolean report() 
 					{
 						return !Thread.interrupted();
 					}
 				}
-			)) return false;
+			))
+		{
+			return false;
+		}
 		
         image.setPixels(pixels, 0, getViewWidth() / getDownscale(), 0, 0, getViewWidth() / getDownscale(), getViewHeight() / getDownscale());
 

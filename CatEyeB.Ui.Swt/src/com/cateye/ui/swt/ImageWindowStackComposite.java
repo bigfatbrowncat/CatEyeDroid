@@ -4,23 +4,23 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.custom.StackLayout;
 import org.eclipse.swt.SWT;
 
-public class MainComposite extends Composite 
+public class ImageWindowStackComposite extends Composite 
 {
 	public enum ActiveScreen { Loading, View }
 	
-	private LoadingScreenComposite loadingScreen;
-	private PreciseBitmapViewComposite preciseBitmapViewComposite;
+	private LoadingPageComposite loadingScreen;
+	private ImageViewPageComposite preciseBitmapViewComposite;
 	private StackLayout mainStackLayout;
 	private ActiveScreen activeScreen;
 	
-	public MainComposite(Composite parent, int style) 
+	public ImageWindowStackComposite(Composite parent, int style) 
 	{
 		super(parent, style);
 		mainStackLayout = new StackLayout(); 
 		setLayout(mainStackLayout);
 		
-		loadingScreen = new LoadingScreenComposite(this, SWT.NONE);
-		preciseBitmapViewComposite = new PreciseBitmapViewComposite(this, SWT.NONE);
+		loadingScreen = new LoadingPageComposite(this, SWT.NONE);
+		preciseBitmapViewComposite = new ImageViewPageComposite(this, SWT.NONE);
 	}
 
 	public void setActiveScreen(ActiveScreen value)
@@ -53,12 +53,12 @@ public class MainComposite extends Composite
 		// Disable the check that prevents subclassing of SWT components
 	}
 
-	public LoadingScreenComposite getLoadingScreen() 
+	public LoadingPageComposite getLoadingScreen() 
 	{
 		return loadingScreen;
 	}
 
-	public PreciseBitmapViewComposite getPreciseBitmapViewComposite()
+	public ImageViewPageComposite getPreciseBitmapViewComposite()
 	{
 		return preciseBitmapViewComposite;
 	}

@@ -14,16 +14,23 @@ import com.cateye.core.IPreciseBitmap;
 import com.cateye.core.exceptions.ImageLoaderException;
 import com.cateye.core.jni.RawImage;
 import com.cateye.ui.ImageLoaderReporter;
+import com.cateye.ui.ImageProcessingReporter;
+import com.cateye.ui.ImageProcessor;
 import com.cateye.ui.ImagesRegistry.LoadingState;
-import com.cateye.ui.swt.MainComposite.ActiveScreen;
+import com.cateye.ui.swt.ImageWindowStackComposite.ActiveScreen;
 
-public class PreciseBitmapViewWindow extends Shell
+public class ImageWindow extends Shell
 {
     private String filename;
 	private RawImage image;
-	private MainComposite mainComposite;
+	private ImageWindowStackComposite mainComposite;
 	
-	protected void callFromUi(final Runnable r)
+	/**
+	 * Calls a <code>Runnable</code> from UI thread if possible 
+	 * @param r The <code>Runnable</code> to invoke
+	 * @return <code>true</code> if succeeded, <code>false</code> otherwise.
+	 */
+	protected boolean callFromUi(final Runnable r)
 	{
 		if (!isDisposed() && !getDisplay().isDisposed())
 		{
@@ -38,6 +45,11 @@ public class PreciseBitmapViewWindow extends Shell
 					}
 				}
 			});
+			return true;
+		}
+		else
+		{
+			return false;
 		}
 	}
 	
@@ -117,7 +129,6 @@ public class PreciseBitmapViewWindow extends Shell
 			{
 				// If we can't close the shell immediately, starting the 
 				// thread which will close it ASAP
-				System.out.print("Closure scheduled");
 				if (!closingPending) closeASAP();
 				arg0.doit = false;
 			}
@@ -144,47 +155,41 @@ public class PreciseBitmapViewWindow extends Shell
 			@Override
 			public void reportResult(final IPreciseBitmap result)
 			{
-				if (!isDisposed())
+				callFromUi(new Runnable() 
 				{
-					getDisplay().syncExec(new Runnable() 
+					@Override
+					public void run() 
 					{
-						
-						@Override
-						public void run() 
-						{
-							mainComposite.getPreciseBitmapViewComposite().getStatusBarComposite().setProgressBarVisibility(false);
-							mainComposite.getPreciseBitmapViewComposite().getStatusBarComposite().setStatusText("Processing complete");
-							mainComposite.getPreciseBitmapViewComposite().getPreciseBitmapView().setPreciseBitmap(result);
-						}
-					});
-				}
+						mainComposite.getPreciseBitmapViewComposite().getStatusBarComposite().setProgressBarVisibility(false);
+						mainComposite.getPreciseBitmapViewComposite().getStatusBarComposite().setStatusText("Processing complete");
+						mainComposite.getPreciseBitmapViewComposite().getPreciseBitmapView().setPreciseBitmap(result);
+					}
+				});
 			}
 			
 			@Override
 			public boolean reportProgress(final float progress)
 			{
-				if (closingPending || isDisposed())
-				{
-					// We cancel the process if the window is closed 
-					return false;
-				}
-				else
+				if (!closingPending)
 				{
 					// Showing the current progress in the status bar
-					getDisplay().syncExec(new Runnable() 
-					{
-						
-						@Override
-						public void run() 
+					if (callFromUi(new Runnable() 
 						{
-							mainComposite.getPreciseBitmapViewComposite().getStatusBarComposite().setProgressBarVisibility(true);
-							mainComposite.getPreciseBitmapViewComposite().getStatusBarComposite().setProgress((int)(progress * 100));
-							mainComposite.getPreciseBitmapViewComposite().getStatusBarComposite().setStatusText("Processing image...");
+							@Override
+							public void run() 
+							{
+								mainComposite.getPreciseBitmapViewComposite().getStatusBarComposite().setProgressBarVisibility(true);
+								mainComposite.getPreciseBitmapViewComposite().getStatusBarComposite().setProgress((int)(progress * 100));
+								mainComposite.getPreciseBitmapViewComposite().getStatusBarComposite().setStatusText("Processing image...");
+							}
 						}
-					});
-
-					return true;
+					))
+					{
+						return true;
+					}
 				}
+				
+				return false;
 			}
 		});
 	}
@@ -211,49 +216,42 @@ public class PreciseBitmapViewWindow extends Shell
 		@Override
 		public void reportException(final ImageLoaderException e)
 		{
-			if (!isDisposed())
+			callFromUi(new Runnable()
 			{
-				getDisplay().syncExec(new Runnable()
+				@Override
+				public void run() 
 				{
-					@Override
-					public void run() 
-					{
-						showError("Can't open the file " + filename + ".\n" + e.getMessage());
-					}
-				});
-			}
+					showError("Can't open the file " + filename + ".\n" + e.getMessage());
+				}
+			});
 		}
 
 		@Override
 		public void reportProgress(final int progress)
 		{
-			if (!isDisposed())
+			callFromUi(new Runnable() 
 			{
-				getDisplay().syncExec(new Runnable() {
-	
-					@Override
-					public void run() 
+				@Override
+				public void run() 
+				{
+					mainComposite.getLoadingScreen().setProgress((int)(progress * 100));
+					if (mainComposite.getActiveScreen() != ActiveScreen.Loading)
 					{
-						mainComposite.getLoadingScreen().setProgress((int)(progress * 100));
-						if (mainComposite.getActiveScreen() != ActiveScreen.Loading)
-						{
-							mainComposite.setActiveScreen(ActiveScreen.Loading);
-						}
+						mainComposite.setActiveScreen(ActiveScreen.Loading);
 					}
-	
-				});
-			}
+				}
+			});
 		}
 	};
 	
 	private void showError(String message)
 	{
-		MessageBox err = new MessageBox(PreciseBitmapViewWindow.this, SWT.ERROR);
+		MessageBox err = new MessageBox(ImageWindow.this, SWT.ERROR);
 		err.setText("CatEye");
 		err.setMessage(message);
 		err.open();
 		
-		PreciseBitmapViewWindow.this.close();		
+		ImageWindow.this.close();		
 	}
 	
 	private boolean checkImageFile(String filename)
@@ -327,7 +325,7 @@ public class PreciseBitmapViewWindow extends Shell
 		}
 	}
 	
-	public PreciseBitmapViewWindow() 
+	public ImageWindow() 
 	{
 		setText("CatEye");
 		setSize(800, 600);
@@ -336,7 +334,7 @@ public class PreciseBitmapViewWindow extends Shell
 		setLayout(new FillLayout());
 
 		// Creating the main widget
-		mainComposite = new MainComposite(this, SWT.NONE);
+		mainComposite = new ImageWindowStackComposite(this, SWT.NONE);
 		
 		// Adding listeners
 		addShellListener(shellListener);

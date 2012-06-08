@@ -1,4 +1,4 @@
-package com.cateye.ui.swt;
+package com.cateye.ui;
 
 import com.cateye.core.IPreciseBitmap;
 

@@ -7,7 +7,7 @@ import org.eclipse.swt.widgets.Composite;
 
 import com.cateye.core.IPreciseBitmap;
 
-public class PreciseBitmapViewComposite extends Composite
+public class ImageViewPageComposite extends Composite
 {
 	private PreciseBitmapView preciseBitmapView;
 	private StatusBarComposite statusBarComposite;
@@ -17,7 +17,7 @@ public class PreciseBitmapViewComposite extends Composite
 	 * @param parent
 	 * @param style
 	 */
-	public PreciseBitmapViewComposite(Composite parent, int style) 
+	public ImageViewPageComposite(Composite parent, int style) 
 	{
 		super(parent, style);
 		GridLayout gridLayout = new GridLayout(1, false);

@@ -1,24 +1,20 @@
 package com.cateye.ui.swt;
 
-import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.ImageData;
 import org.eclipse.swt.graphics.PaletteData;
-import org.eclipse.swt.graphics.RGB;
-import org.eclipse.swt.graphics.Rectangle;
 
 import com.cateye.core.ImageCoordinatesTransformer;
 import com.cateye.core.PointD;
 import com.cateye.core.PreciseBitmapGetPixelsCallback;
-import com.cateye.core.PreciseBitmapViewCache;
 
-public class SwtPreciseBitmapViewCache extends PreciseBitmapViewCache
+public class PreciseBitmapViewCache extends com.cateye.core.PreciseBitmapViewCache
 {
     private ImageData imageData;
     private boolean antialias;
 	
-	public SwtPreciseBitmapViewCache(int downscale,	boolean antialias, ImageCoordinatesTransformer imageTransformer) 
+	public PreciseBitmapViewCache(int downscale,	boolean antialias, ImageCoordinatesTransformer imageTransformer) 
 	{
 		super(downscale, imageTransformer);
 		this.antialias = antialias;

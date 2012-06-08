@@ -21,10 +21,10 @@ public class PreciseBitmapView extends View
     private PointF fingerStartPosition = new PointF(0, 0);
     private ArrayList<PointF> oldFingers = new ArrayList<PointF>();
     private ArrayList<PointF> currentFingers = new ArrayList<PointF>();
-    private AndroidPreciseBitmapViewCache[] cache = new AndroidPreciseBitmapViewCache[] 
+    private PreciseBitmapViewCache[] cache = new PreciseBitmapViewCache[] 
     {
-    	new AndroidPreciseBitmapViewCache(4, imageTransformer),
-    	new AndroidPreciseBitmapViewCache(1, imageTransformer)
+    	new PreciseBitmapViewCache(4, imageTransformer),
+    	new PreciseBitmapViewCache(1, imageTransformer)
     };
     private static final int LQ = 0; 
     private static final int HQ = 1; 

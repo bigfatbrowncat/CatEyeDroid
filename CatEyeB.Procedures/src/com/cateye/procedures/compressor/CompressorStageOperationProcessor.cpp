@@ -12,7 +12,7 @@
 
 using namespace std;
 
-#define DEBUG_INFO printf("%d\n", __LINE__);fflush(stdout);
+#define DEBUG_INFO //printf("%d\n", __LINE__);fflush(stdout);
 
 #define JCLASS_PROGRESS_LISTENER								"com/cateye/core/ProgressListener"
 #define JCLASS_PROGRESS_LISTENER_REPORT_PROGRESS				"reportProgress"
@@ -503,6 +503,7 @@ public:
 
 void* PoissonNeimanThread_start(void* data)
 {
+	double my_delta = 0;
 	PoissonNeimanThread* thr = (PoissonNeimanThread*)data;
 	int w = thr->w;
 	int h = thr->h;
@@ -511,9 +512,8 @@ void* PoissonNeimanThread_start(void* data)
 	arr2<float>& I = thr->I;
 	arr2<float>& Inew = thr->Inew;
 	arr2<float>& rho = thr->rho;
-	double my_delta = 0;
 
-	for (int i = i1; i < i2; i++) //	for (int i = 1; i < w + 1; i++)
+	for (int i = i1; i < i2; i++)
 	{
 		// Run, Thomas, run!
 		float alpha[h + 3];
@@ -524,17 +524,9 @@ void* PoissonNeimanThread_start(void* data)
 		float* cur_alpha = &alpha[1];
 		float* cur_beta = &beta[1];
 
-		/*float *I_p1 = &(I(i + 1, 1));
-		float *Inew_m1 = &(Inew(i - 1, 1));
-		float *rho_m1m1 = &(rho(i - 1, 0));*/
-
 		for (int j = 1; j < h + 1; j++)
 		{
 			float Fj = I(i + 1, j) + Inew(i - 1, j) - 2 * rho(i - 1, j - 1);
-			/*float Fj = (*I_p1) + (*Inew_m1) - 2 * (*rho_m1m1);
-			I_p1 += w + 2;
-			Inew_m1 += w + 2;
-			rho_m1m1 += w;*/
 
 			float alpha_new = 1.0f / (4 - *cur_alpha);
 			float beta_new = (Fj + *cur_beta) / (4.0f - *cur_alpha);
@@ -562,8 +554,8 @@ void* PoissonNeimanThread_start(void* data)
 			my_delta += (float)fabs(Inew_ij - Iold_ij);
 		}
 	}
-
 	thr->my_delta = my_delta;
+	return NULL;
 }
 
 
@@ -807,7 +799,6 @@ bool Compress(PreciseBitmap bmp, double curve, double noise_gate, double pressur
 
 	if (!(*reporter)(reporterCallerData, 0.01)) // reporting 1%
 	{
-		printf("HERE 1!\n"); fflush(stdout);
 		return false;
 	}
 
@@ -828,7 +819,6 @@ bool Compress(PreciseBitmap bmp, double curve, double noise_gate, double pressur
 
 	if (!(*reporter)(reporterCallerData, 0.02)) // reporting 2%
 	{
-		printf("HERE 2!\n"); fflush(stdout);
 		return false;
 	}
 
@@ -858,7 +848,6 @@ bool Compress(PreciseBitmap bmp, double curve, double noise_gate, double pressur
 		// it should spend 8% to get 10% progress after it's finished
 		if ((i % 100 == 0) && (!(*reporter)(reporterCallerData, 0.02 + 0.08 * i / (Hw - 1))))
 		{
-			printf("HERE 3!\n"); fflush(stdout);
 			return false;
 		}
 	}
@@ -990,7 +979,8 @@ JNIEXPORT jboolean JNICALL Java_com_cateye_procedures_compressor_CompressorStage
 	Compress_progressListenerData data = Compress_progressListenerData(listener, *env);
 	if (!Compress(bmp, curve, noiseGate, pressure, contrast, 0.003f, 10000, &Compress_progressReporter, &data))
 	{
-		printf("User canceled the operation!\n");	fflush(stdout);
+		printf("User canceled the operation!\n");
+		fflush(stdout);
 
 		return false;
 	}
