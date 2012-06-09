@@ -1,9 +1,10 @@
-#include <com/cateye/procedures/downsample/DownsampleStageOperationProcessor.h>
+//TODO Make this include work under Android
+//#include <com/cateye/procedures/downsample/DownsampleStageOperationProcessor.h>
 #include <colorlib.h>
 #include <bitmaps.h>
 #include <jni.h>
 #include <math.h>
-#include <mem.h>
+#include <string.h>
 
 #include <vector>
 

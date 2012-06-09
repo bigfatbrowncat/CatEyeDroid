@@ -20,7 +20,7 @@
     <application
         android:name="CatEyeApplication"
         android:label="@string/app_name" >
-        <activity android:name="PreciseBitmapViewActivity" >
+        <activity android:name=".ImageActivity" >
 
             <!-- <intent-filter> -->
             <!-- <category android:name="android.intent.category.LAUNCHER"/> -->

@@ -1,9 +1,10 @@
-#include <com/cateye/procedures/compressor/CompressorStageOperationProcessor.h>
+//TODO Make this include work under Android
+//#include <com/cateye/procedures/compressor/CompressorStageOperationProcessor.h>
 #include <colorlib.h>
 #include <bitmaps.h>
 #include <jni.h>
 #include <math.h>
-#include <mem.h>
+#include <string.h>
 #include <time.h>
 #include <pthread.h>
 #include <stdio.h>

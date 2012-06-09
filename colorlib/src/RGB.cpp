@@ -1,4 +1,4 @@
-#include "colorlib.h"
+#include "../include/colorlib.h"
 
 #include <math.h>
 

@@ -6,7 +6,7 @@ LOCAL_PATH_BACKUP := $(LOCAL_PATH)
 LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 
-LOCAL_MODULE    := libCore
+LOCAL_MODULE    := libProcedures
 LOCAL_LDLIBS    := -llog
 LOCAL_CFLAGS    := -fexceptions -ffast-math -O3 #-mfpmath=sse or -mfpmath=neon	TODO Test it!
 LOCAL_C_INCLUDES:= $(LOCAL_PATH)/../bitmaps/include \

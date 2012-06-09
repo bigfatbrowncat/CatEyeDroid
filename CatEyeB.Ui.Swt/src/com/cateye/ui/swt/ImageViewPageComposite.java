@@ -5,8 +5,6 @@ import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
 
-import com.cateye.core.IPreciseBitmap;
-
 public class ImageViewPageComposite extends Composite
 {
 	private PreciseBitmapView preciseBitmapView;

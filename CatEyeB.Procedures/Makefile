@@ -4,7 +4,7 @@ PROJ = CatEyeB.Procedures
 
 # CC macros
 COMMON_CFLAGS = -static-libgcc
-CFLAGS = -O3
+CFLAGS = -O3 -ffast-math
 CDEFINES =
 
 # CPP macros (additional to C macros)

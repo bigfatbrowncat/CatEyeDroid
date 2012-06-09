@@ -16,7 +16,7 @@ import com.cateye.core.jni.RawImage;
 import com.cateye.ui.ImageLoaderReporter;
 import com.cateye.ui.ImagesRegistry.LoadingState;
 
-public class PreciseBitmapViewActivity extends Activity 
+public class ImageActivity extends Activity 
 {
     private String filename;
     private RawImage image;
@@ -26,26 +26,22 @@ public class PreciseBitmapViewActivity extends Activity
 
 	ImageLoaderReporter imageLoaderReporter = new ImageLoaderReporter() 
 	{
-		@Override
 		public void reportSuccess(final IPreciseBitmap preciseBitmap)
 		{
-			PreciseBitmapViewActivity.this.runOnUiThread(new Runnable()
+			ImageActivity.this.runOnUiThread(new Runnable()
 			{
-				@Override
 				public void run() 
 				{
 					loadingProgressDialog.dismiss();
-					PreciseBitmapViewActivity.this.preciseBitmapView.setPreciseBitmap(preciseBitmap);
+					ImageActivity.this.preciseBitmapView.setPreciseBitmap(preciseBitmap);
 				}
 			});
 		}
 		
-		@Override
 		public void reportException(ImageLoaderException e) 
 		{
-			PreciseBitmapViewActivity.this.runOnUiThread(new Runnable()
+			ImageActivity.this.runOnUiThread(new Runnable()
 			{
-				@Override
 				public void run() 
 				{
 					loadingProgressDialog.dismiss();
@@ -54,12 +50,10 @@ public class PreciseBitmapViewActivity extends Activity
 			});
 		}
 
-		@Override
 		public void reportProgress(final int progress)
 		{
-			PreciseBitmapViewActivity.this.runOnUiThread(new Runnable()
+			ImageActivity.this.runOnUiThread(new Runnable()
 			{
-				@Override
 				public void run() 
 				{
 					if (!loadingProgressDialog.isShowing())

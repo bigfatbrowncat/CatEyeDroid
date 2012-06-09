@@ -1,4 +1,5 @@
-#include <com/cateye/procedures/limiter/LimiterStageOperationProcessor.h>
+//TODO Make this include work under Android
+//#include <com/cateye/procedures/limiter/LimiterStageOperationProcessor.h>
 #include <colorlib.h>
 #include <bitmaps.h>
 #include <jni.h>

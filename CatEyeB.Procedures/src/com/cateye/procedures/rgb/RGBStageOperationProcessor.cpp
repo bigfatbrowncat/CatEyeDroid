@@ -1,4 +1,5 @@
-#include <com/cateye/procedures/rgb/RGBStageOperationProcessor.h>
+//TODO Make this include work under Android
+//#include <com/cateye/procedures/rgb/RGBStageOperationProcessor.h>
 #include <colorlib.h>
 #include <bitmaps.h>
 #include <jni.h>
