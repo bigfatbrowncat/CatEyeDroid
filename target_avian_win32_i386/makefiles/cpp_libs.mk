@@ -48,7 +48,7 @@ ENSURE_OBJ = if [ ! -d "$(TARGET_OBJ)" ]; then mkdir -p "$(TARGET_OBJ)"; fi
 
 ################### Objects ###################
 
-$(OBJECT_FILES_WITH_PATH) : $(TARGET_OBJ)/%.o : $(SOURCE)/%.cpp $(HEADERS) 
+$(OBJECT_FILES_WITH_PATH) : $(TARGET_OBJ)/%.o : $(SOURCE)/%.cpp $(HEADERS)
 	@echo "[$(PROJ)] Compiling $@ ..."
 	$(ENSURE_OBJ)
 	if [ ! -d $(dir $@) ]; then mkdir -p $(dir $@); fi
@@ -71,4 +71,4 @@ $(TARGET_LIB)/$(STATIC_LIB): $(OBJECT_FILES_WITH_PATH)
 ############### Dependent libs ################
 
 .PHONY: all static_lib shared_lib clean
-.SILENT:
+#.SILENT:

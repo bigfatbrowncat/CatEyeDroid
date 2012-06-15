@@ -24,6 +24,13 @@ public class ImageWindow extends Shell
     private String filename;
 	private RawImage image;
 	private ImageWindowStackComposite mainComposite;
+	/**
+	 * Flag for other threads and callbacks that the window is going to be closed.
+	 * It should be handled as cancel of all pending operations.
+	 */
+	private volatile boolean closingPending = false; 
+	
+	private ImageProcessor imageProcessor = new ImageProcessor();
 	
 	/**
 	 * Calls a <code>Runnable</code> from UI thread if possible 
@@ -52,14 +59,6 @@ public class ImageWindow extends Shell
 			return false;
 		}
 	}
-	
-	/**
-	 * Flag for other threads and callbacks that the window is going to be closed.
-	 * It should be handled as cancel of all pending operations.
-	 */
-	private volatile boolean closingPending = false; 
-	
-	private ImageProcessor imageProcessor = new ImageProcessor();
 	
 	protected boolean canCloseNow()
 	{

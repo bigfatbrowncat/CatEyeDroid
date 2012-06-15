@@ -12,7 +12,7 @@ using namespace std;
 
 #define DEBUG_INFO printf("%d\n", __LINE__);fflush(stdout);
 
-JNIEXPORT void JNICALL Java_com_cateye_procedures_downsample_DownsampleStageOperationProcessor_process
+extern "C" JNIEXPORT void JNICALL Java_com_cateye_procedures_downsample_DownsampleStageOperationProcessor_process
   (JNIEnv * env, jobject obj, jobject params, jobject bitmap, jobject listener)
 {
 	// Getting the class

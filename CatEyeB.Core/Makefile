@@ -1,28 +1,32 @@
-#################### Macros #####################
-
 PROJ = CatEyeB.Core
 
-# CC macros
-COMMON_CFLAGS = -static-libgcc
-CFLAGS = -O3
-CDEFINES =
+JNI_CPPFLAGS = -static-libgcc -static-libstdc++ -O3
 
-# CPP macros (additional to C macros)
-COMMON_CPPFLAGS = -static-libstdc++
-CPPFLAGS = 
-CPPDEFINES =
+LIBS = ../bitmaps/lib/bitmaps.dll.a \
+       ../libraw/lib/raw.dll.a \
+       ../jpeg-8c/lib/jpeg8c.dll.a
 
-# Universal macros
-LIBS = $(TARGET_LIB)/bitmaps.dll.a $(TARGET_LIB)/raw.dll.a $(TARGET_LIB)/jpeg8c.dll.a
-CUSTOM_INCLUDES = -I"../bitmaps/include" -I"../libraw/libraw" -I"../jpeg-8c/include"
-SOURCE = src
-TARGET = ../CatEyePC
-JAVA_JNI_CLASSES = com.cateye.core.jni.PreciseBitmap \
-                   com.cateye.core.jni.PreviewBitmap \
-                   com.cateye.core.jni.RawImageLoader
-NATIVE_LIB = Core.dll
+INCLUDES = ../bitmaps/include \
+           ../libraw/libraw \
+           ../jpeg-8c/include
 
-all: shared_lib classes headers
+JNI_NATIVE_LIB = Core.dll
 
-include $(TARGET)/makefiles/cpp_java_cross.mk
+JARNAME = Core.jar
 
+all: classes jar jni_lib jni_headers
+clean: classes_clean jar_clean jni_clean
+
+../bitmaps/lib/bitmaps.dll.a:
+	$(MAKE) -C ../bitmaps
+
+../libraw/lib/raw.dll.a:
+	$(MAKE) -C ../libraw
+	
+../jpeg-8c/lib/jpeg8c.dll.a:
+	$(MAKE) -C ../jpeg-8c
+
+include ../target_avian_win32_i386/makefiles/java_classes.mk
+include ../target_avian_win32_i386/makefiles/java_jni.mk
+
+.SILENT:

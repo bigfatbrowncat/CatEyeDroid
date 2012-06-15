@@ -14,7 +14,7 @@ INCLUDES =
 
 SOURCE = src
 HEADERS = include
-TARGET = ../CatEyePC
+TARGET = .
 
 TARGET_BIN = $(TARGET)/bin
 TARGET_OBJ = $(TARGET)/obj

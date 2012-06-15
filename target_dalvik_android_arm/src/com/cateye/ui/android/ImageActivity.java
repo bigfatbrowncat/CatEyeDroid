@@ -8,12 +8,18 @@ import android.app.ProgressDialog;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
 import android.view.Window;
+import android.widget.LinearLayout;
+import android.widget.ProgressBar;
+import android.widget.TextView;
 
 import com.cateye.core.IPreciseBitmap;
 import com.cateye.core.exceptions.ImageLoaderException;
 import com.cateye.core.jni.RawImage;
 import com.cateye.ui.ImageLoaderReporter;
+import com.cateye.ui.ImageProcessingReporter;
+import com.cateye.ui.ImageProcessor;
 import com.cateye.ui.ImagesRegistry.LoadingState;
 
 public class ImageActivity extends Activity 
@@ -23,6 +29,15 @@ public class ImageActivity extends Activity
 	private PreciseBitmapView preciseBitmapView;
 	private ProgressDialog loadingProgressDialog = null;
 	private int imageLoadingProgress = 0;
+	private ProgressBar statusProgressBar;
+	private TextView statusTextView;
+	private LinearLayout statusLayout;
+	/**
+	 * Flag for other threads and callbacks that the window is going to be closed.
+	 * It should be handled as cancel of all pending operations.
+	 */
+	private volatile boolean closingPending = false; 
+	private ImageProcessor imageProcessor = new ImageProcessor();
 
 	ImageLoaderReporter imageLoaderReporter = new ImageLoaderReporter() 
 	{
@@ -70,6 +85,49 @@ public class ImageActivity extends Activity
 		}
 	};
 	
+	void startBitmapProcessing(IPreciseBitmap bitmap)
+	{
+		imageProcessor.startProcessingAsync(bitmap, new ImageProcessingReporter()
+		{
+			
+			public void reportResult(final IPreciseBitmap result)
+			{
+				ImageActivity.this.runOnUiThread(new Runnable()
+				{
+					public void run() 
+					{
+						statusProgressBar.setVisibility(View.INVISIBLE);
+						statusTextView.setText("Processing complete");
+						preciseBitmapView.setPreciseBitmap(result);
+					}
+				});
+			}
+			
+			public boolean reportProgress(final float progress)
+			{
+				if (!closingPending)
+				{
+					// Showing the current progress in the status bar
+					ImageActivity.this.runOnUiThread(new Runnable()
+						{
+							public void run() 
+							{
+								statusProgressBar.setVisibility(View.VISIBLE);
+								statusProgressBar.setProgress((int)(progress * 100));
+								statusTextView.setText("Processing image...");
+							}
+						}
+					);
+					return true;
+				}
+				else
+				{
+					return false;
+				}
+			}
+		});
+	}
+	
 	@Override
     public void onCreate(Bundle savedInstanceState)
 	{
@@ -83,6 +141,9 @@ public class ImageActivity extends Activity
 	    // Loading UI
         setContentView(R.layout.raw_viewer_activity);
         preciseBitmapView = (PreciseBitmapView)findViewById(R.id.preciseBitmapView);
+        statusProgressBar = (ProgressBar)findViewById(R.id.progressBar);
+        statusTextView = (TextView)findViewById(R.id.textView1);
+        statusLayout = (LinearLayout)findViewById(R.id.statusLayout);
 
         // Determining if the activity has just been created or it has been restored
         if (savedInstanceState != null)

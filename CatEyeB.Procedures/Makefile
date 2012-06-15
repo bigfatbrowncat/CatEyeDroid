@@ -1,29 +1,39 @@
-#################### Macros #####################
-
 PROJ = CatEyeB.Procedures
 
-# CC macros
-COMMON_CFLAGS = -static-libgcc
-CFLAGS = -O3 -ffast-math
-CDEFINES =
+JNI_CPPFLAGS = -static-libgcc -static-libstdc++ -O3 -ffast-math
 
-# CPP macros (additional to C macros)
-COMMON_CPPFLAGS = -static-libstdc++
-CPPFLAGS = 
-CPPDEFINES =
+SYSLIBPATH = /mingw/lib
+SYSBINPATH = /mingw/bin
+PTHREAD_BIN = $(shell echo `dlltool -I $(SYSLIBPATH)/libpthread.a`)
 
-# Universal macros
-LIBS = $(TARGET_LIB)/bitmaps.dll.a $(TARGET_LIB)/colorlib.a -lpthread
-CUSTOM_INCLUDES = -I"../bitmaps/include" -I"../colorlib/include"
-SOURCE = src
-TARGET = ../CatEyePC
-JAVA_JNI_CLASSES = com.cateye.procedures.hsb.HSBStageOperationProcessor				\
-                   com.cateye.procedures.rgb.RGBStageOperationProcessor				\
-                   com.cateye.procedures.limiter.LimiterStageOperationProcessor		\
-                   com.cateye.procedures.compressor.CompressorStageOperationProcessor	\
-                   com.cateye.procedures.downsample.DownsampleStageOperationProcessor
-NATIVE_LIB = Procedures.dll
+LIBS := ../bitmaps/lib/bitmaps.dll.a \
+        ../colorlib/lib/colorlib.a \
+        $(SYSBINPATH)/$(PTHREAD_BIN)
 
-all: shared_lib classes headers
+DEP_JARS = ../CatEyeB.Core/out/jar/Core.jar
 
-include $(TARGET)/makefiles/cpp_java_cross.mk
+EXTLIBS := #pthread
+
+INCLUDES = ../bitmaps/include \
+           ../colorlib/include
+
+JNI_NATIVE_LIB = Procedures.dll
+
+JARNAME = Procedures.jar
+
+all: classes jar jni_lib jni_headers
+clean: classes_clean jar_clean jni_clean
+
+../CatEyeB.Core/out/jar/Core.jar:
+	$(MAKE) -C ../CatEyeB.Core
+
+../bitmaps/lib/bitmaps.dll.a:
+	$(MAKE) -C ../bitmaps
+
+../colorlib/lib/colorlib.a:
+	$(MAKE) -C ../colorlib
+
+include ../target_avian_win32_i386/makefiles/java_classes.mk
+include ../target_avian_win32_i386/makefiles/java_jni.mk
+
+.SILENT:

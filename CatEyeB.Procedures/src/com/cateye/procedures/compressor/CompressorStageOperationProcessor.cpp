@@ -932,7 +932,7 @@ bool Compress_progressReporter(void* callerData, float progress)
 	return (bool)res;
 }
 
-JNIEXPORT jboolean JNICALL Java_com_cateye_procedures_compressor_CompressorStageOperationProcessor_process
+extern "C" JNIEXPORT jboolean JNICALL Java_com_cateye_procedures_compressor_CompressorStageOperationProcessor_process
   (JNIEnv * env, jobject obj, jobject params, jobject bitmap, jobject listener)
 {
 	// Getting the class

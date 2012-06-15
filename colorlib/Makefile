@@ -16,9 +16,9 @@ CPPDEFINES =
 LIBS =
 INCLUDE = include
 SOURCE = src
-TARGET = ../CatEyePC
+TARGET = .
 OBJECTS = HSV \
           RGB
 LIBNAME = colorlib
 
-include $(TARGET)/makefiles/cpp_libs.mk
+include ../target_avian_win32_i386/makefiles/cpp_libs.mk

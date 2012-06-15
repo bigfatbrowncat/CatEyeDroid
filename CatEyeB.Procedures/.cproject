@@ -22,7 +22,7 @@
 							<targetPlatform archList="all" binaryParser="org.eclipse.cdt.core.PE" id="cdt.managedbuild.target.gnu.platform.mingw.base.1151152116" name="Debug Platform" osList="win32" superClass="cdt.managedbuild.target.gnu.platform.mingw.base"/>
 							<builder enableAutoBuild="true" id="cdt.managedbuild.target.gnu.builder.base.1161782434" keepEnvironmentInBuildfile="false" managedBuildOn="false" name="Gnu Make Builder" parallelBuildOn="true" parallelizationNumber="-1" superClass="cdt.managedbuild.target.gnu.builder.base">
 								<outputEntries>
-									<entry excluding="obj/|bin/" flags="VALUE_WORKSPACE_PATH" kind="outputPath" name=""/>
+									<entry flags="VALUE_WORKSPACE_PATH" kind="outputPath" name="out"/>
 								</outputEntries>
 							</builder>
 							<tool id="cdt.managedbuild.tool.gnu.assembler.mingw.base.975755073" name="GCC Assembler" superClass="cdt.managedbuild.tool.gnu.assembler.mingw.base">
@@ -30,7 +30,7 @@
 									<listOptionValue builtIn="false" value="&quot;${env_var:JAVA_HOME}/include&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${env_var:JAVA_HOME}/include/win32&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/colorlib/include}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CatEyePC/gen}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CatEyeB.Procedures/out/gen}&quot;"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.assembler.input.1264524465" superClass="cdt.managedbuild.tool.gnu.assembler.input"/>
 							</tool>
@@ -40,7 +40,7 @@
 									<listOptionValue builtIn="false" value="&quot;${env_var:JAVA_HOME}/include&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${env_var:JAVA_HOME}/include/win32&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/colorlib/include}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CatEyePC/gen}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CatEyeB.Procedures/out/gen}&quot;"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.476828598" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 							</tool>
@@ -49,7 +49,7 @@
 									<listOptionValue builtIn="false" value="&quot;${env_var:JAVA_HOME}/include&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${env_var:JAVA_HOME}/include/win32&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/colorlib/include}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CatEyePC/gen}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CatEyeB.Procedures/out/gen}&quot;"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.732150293" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
 							</tool>

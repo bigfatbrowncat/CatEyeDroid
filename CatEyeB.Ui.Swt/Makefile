@@ -1,18 +1,25 @@
-EXTERNAL = ../external
-TARGET = ../CatEyePC
+PROJ = CatEyeB.Ui.Swt
 
-all: extractswt classes
+DEP_JARS = ../external/jar/classpath.jar \
+           ../external/jar/swt.jar \
+           ../CatEyeB.Core/out/jar/Core.jar \
+           ../CatEyeB.Procedures/out/jar/Procedures.jar \
+           ../CatEyeB.Ui/out/jar/Ui.jar
 
-include Classes.mk
+JARNAME = Ui.Swt.jar
 
-extractswt:
-	if [ ! -d "$(TARGET)/bin/classes" ]; then mkdir -p "$(TARGET)/bin/classes"; fi
-	
-	echo "Unpacking swt.jar"
-	cd $(TARGET)/bin/classes; \
-	"$(JAVA_HOME)/bin/jar" xf ../../$(EXTERNAL)/jar/swt.jar 
+all: classes jar
+clean: classes_clean jar_clean
 
-	echo "Unpacking classpath.jar"
-	cd $(TARGET)/bin/classes; \
-	"$(JAVA_HOME)/bin/jar" xf ../../$(EXTERNAL)/jar/classpath.jar 
-	
+../CatEyeB.Core/out/jar/Core.jar:
+	$(MAKE) -C ../CatEyeB.Core
+
+../CatEyeB.Procedures/out/jar/Procedures.jar:
+	$(MAKE) -C ../CatEyeB.Procedures
+
+../CatEyeB.Ui/out/jar/Ui.jar:
+	$(MAKE) -C ../CatEyeB.Ui
+
+include ../target_avian_win32_i386/makefiles/java_classes.mk
+
+.SILENT:

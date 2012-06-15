@@ -18,7 +18,7 @@ SOURCE = src
 PUBLIC_HEADERS = libraw
 PRIVATE_HEADERS = internal
 
-TARGET = ../CatEyePC
+TARGET = .
 
 TARGET_BIN = $(TARGET)/bin
 TARGET_OBJ = $(TARGET)/obj
