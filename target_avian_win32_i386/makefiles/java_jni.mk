@@ -17,10 +17,10 @@ OSTYPE := $(shell uname)
 
 JNI_INCLUDE_FLAGS = -I"$(JAVA_HOME)/include" -I"$(JAVA_HOME)/include/win32"  
 JNI_SOURCE = src
-CLASSPATH = out/classes
-TARGET_OBJ = out/obj
-TARGET_LIB = out/bin
-TARGET_INCLUDE_JNI = out/gen
+CLASSPATH = out/avian_win32_i386/classes
+TARGET_OBJ = out/avian_win32_i386/obj
+TARGET_LIB = out/avian_win32_i386/bin
+TARGET_INCLUDE_JNI = out/avian_win32_i386/gen
 
 CLASS_FILES = $(addprefix $(CLASSPATH)/,$(addsuffix .class,$(basename $(JAVA_FILES))))
 

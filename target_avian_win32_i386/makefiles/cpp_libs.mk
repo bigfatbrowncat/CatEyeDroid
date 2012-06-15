@@ -8,10 +8,10 @@ CPPDEFINES += $(CDEFINES)
 
 OSTYPE := $(shell uname)
 
-TARGET_BIN = $(TARGET)/bin
-TARGET_OBJ = $(TARGET)/obj
-TARGET_LIB = $(TARGET)/lib
-TARGET_GEN = $(TARGET)/gen
+TARGET_BIN = $(TARGET)/out/avian_win32_i386/bin
+TARGET_OBJ = $(TARGET)/out/avian_win32_i386/obj
+TARGET_LIB = $(TARGET)/out/avian_win32_i386/lib
+TARGET_GEN = $(TARGET)/out/avian_win32_i386/gen
 
 STATIC_LIB = $(LIBNAME).a
 SHARED_LIB = $(LIBNAME).dll

@@ -6,8 +6,8 @@
 #    classes - build classes
 #    classes_clean - clean classes
 
-CLASSPATH = out/classes
-JARPATH = out/jar
+CLASSPATH = out/avian_win32_i386/classes
+JARPATH = out/avian_win32_i386/jar
 SOURCE = src
 JAVA_FILES := $(shell cd $(SOURCE); find . -name \*.java | awk '{ sub(/.\//,"") }; 1')
 CLASS_FILES = $(addprefix $(CLASSPATH)/,$(addsuffix .class,$(basename $(JAVA_FILES))))

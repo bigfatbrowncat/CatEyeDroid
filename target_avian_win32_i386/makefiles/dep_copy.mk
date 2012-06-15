@@ -8,8 +8,8 @@
 #    copy_dep_classpaths - copies external classes into classpath
 #    move_dlls_to_bin
 
-CLASSPATH = out/classes
-BIN = out/bin
+CLASSPATH = out/avian_win32_i386/classes
+BIN = out/avian_win32_i386/bin
 FIND_DLLS = cd $(CLASSPATH); find . -name \*.dll | awk '{ sub(/.\//,"") }; 1'
 
 ENSURE_CLASSES = if [ ! -d "$(CLASSPATH)" ]; then mkdir -p "$(CLASSPATH)"; fi
@@ -19,7 +19,7 @@ PWD = $(shell pwd)
 extract_dep_jars_no_move_dlls:
 	$(ENSURE_CLASSES)
 	$(foreach jarname, $(DEP_JARS), \
-	  echo "[$(PROJ)] Unpacking $(jarname)"; \
+	  echo "[$(PROJ)] Extracting $(jarname)"; \
 	  ( cd $(CLASSPATH); \
 	    "$(JAVA_HOME)/bin/jar" xf $(PWD)/$(jarname); ); )
 
