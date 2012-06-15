@@ -1,32 +1,53 @@
-################### Main part ###################
+# This make include file provides java classes build procedure
+# Parameters:
+#    BUILD_CLASSPATHS - dependency classpath (no semicolon in the end!)
+#    SOURCE - java source path
+# Targets:
+#    classes - build classes
+#    classes_clean - clean classes
 
-TARGET_BIN_CLASSES = $(TARGET)/bin/classes
+CLASSPATH = out/dalvik_android_arm/classes
+JARPATH = out/dalvik_android_arm/jar
 
-JAVA_FILES := $(shell cd $(SOURCE); find . -name \*.java) 
-CLASS_FILES = $(addprefix $(TARGET_BIN_CLASSES)/,$(addsuffix .class,$(basename $(JAVA_FILES))))
+JAVA_FILES := $(foreach srcpath,$(SOURCE),$(eval JAVA_SRCS += "$(srcpath) ")$(shell cd $(srcpath); find . -name \*.java | awk '{ sub(/.\//,"") }; 1'))
 
-all: classes
+CLASS_FILES = $(addprefix $(CLASSPATH)/,$(addsuffix .class,$(basename $(JAVA_FILES))))
 
-clean:
-	@echo "[$(PROJ)] Removing Java classes..."
+BUILD_CLASSPATHS = $(shell echo "$(DEP_CLASSPATHS);$(DEP_JARS)" | awk 'gsub(/ +/, ";"); 1';)
+
+classes_clean:
+	@echo "[$(PROJ)] Removing Java classes"
 	rm -f $(foreach NAME, $(basename $(CLASS_FILES)), $(shell echo $(NAME)'\$$'\*.class))
-	rm -f $(CLASS_FILES)
+	rm -f $(CLASS_FILES) 
 	
 	@echo "[$(PROJ)] Removing empty directories..."
-	find $(TARGET) -depth -empty -type d -exec rmdir {} \;
+	find . -depth -empty -type d -exec rmdir {} \;
+
+jar_clean:
+	@echo "[$(PROJ)] Removing jar"
+	rm -f $(JARPATH)/$(JARNAME)
+
+	@echo "[$(PROJ)] Removing empty directories..."
+	find . -depth -empty -type d -exec rmdir {} \;
 
 ################### Folders ###################
 
-ENSURE_BIN_CLASSES = if [ ! -d "$(TARGET_BIN_CLASSES)" ]; then mkdir -p "$(TARGET_BIN_CLASSES)"; fi
+ENSURE_CLASSES = if [ ! -d "$(CLASSPATH)" ]; then mkdir -p "$(CLASSPATH)"; fi
+ENSURE_JAR = if [ ! -d "$(JARPATH)" ]; then mkdir -p "$(JARPATH)"; fi
 
 ################ Java classes #################
 
 classes: $(CLASS_FILES)
 
-$(TARGET_BIN_CLASSES)/%.class : $(SOURCE)/%.java
-	@echo "[$(PROJ)] Compiling generated java files $@ ..."
-	$(ENSURE_BIN_CLASSES)
-	"$(JAVA_HOME)/bin/javac" -g -sourcepath "$(SOURCE)" -classpath "$(EXTERNAL_JARS);$(CUSTOM_JARS);$(TARGET_BIN_CLASSES)" -d "$(TARGET_BIN_CLASSES)" $<
+$(CLASSPATH)/%.class : $(SOURCE)/%.java $(DEP_JARS)
+	@echo "[$(PROJ)] Compiling java class $@"
+	$(ENSURE_CLASSES)
+	"$(JAVA_HOME)/bin/javac" -target 1.5 -g -sourcepath "$(SOURCE)" -classpath "$(BUILD_CLASSPATHS);$(CLASSPATH)" -d "$(CLASSPATH)" $<
 
-.PHONY: all classes clean #deplibs 
-.SILENT:
+jar:
+	@echo "[$(PROJ)] Creating jar file $(JARPATH)/$(JARNAME)"
+	$(ENSURE_JAR)
+	"$(JAVA_HOME)/bin/jar" cf $(JARPATH)/$(JARNAME) -C $(CLASSPATH) .
+
+.PHONY: classes classes_clean jar jar_clean
+#.SILENT:

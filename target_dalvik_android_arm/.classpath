@@ -5,7 +5,8 @@
 	<classpathentry kind="con" path="com.android.ide.eclipse.adt.ANDROID_FRAMEWORK"/>
 	<classpathentry kind="con" path="com.android.ide.eclipse.adt.LIBRARIES"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/CatEyeB.Core"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/CatEyeB.Ui"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/CatEyeB.Procedures"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/CatEyeB.Ui"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/CatEyeB.Ui.Swt"/>
 	<classpathentry kind="output" path="bin/classes"/>
 </classpath>

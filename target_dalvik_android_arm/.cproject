@@ -24,7 +24,6 @@
 							<tool id="cdt.managedbuild.tool.gnu.assembler.mingw.base.1540360532" name="GCC Assembler" superClass="cdt.managedbuild.tool.gnu.assembler.mingw.base">
 								<option id="gnu.both.asm.option.include.paths.1160637633" name="Include paths (-I)" superClass="gnu.both.asm.option.include.paths" valueType="includePath">
 									<listOptionValue builtIn="false" value="&quot;C:\android-ndk-r7c\platforms\android-9\arch-arm\usr\include&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/CatEyeDroid/jni}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/jpeg-8c/include}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/bitmaps/include}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/libraw/libraw}&quot;"/>

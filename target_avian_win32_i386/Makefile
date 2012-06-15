@@ -1,4 +1,4 @@
-PROJ = CatEye (avian, windows, i386)
+PROJ = CatEye @ avian, windows, i386
 
 EXTERNAL = ../external
 PLATFORM = windows
@@ -105,8 +105,8 @@ avian_embed: $(DEP_JARS) $(DEP_BINS) extract_dep_jars $(BIN)/Core.dll $(BIN)/Pro
     dlltool -d $(EMBEDDED_TARGET_NAME).def -e $(EMBEDDED_TARGET_NAME).exp; \
     g++ $(EMBEDDED_TARGET_NAME).exp *.o -L$(PWD)/$(EXTERNAL)/lib -lmingwthrd -lm -lz -lws2_32 \
         -mwindows -mconsole -static-libgcc -static-libstdc++ -o $(EMBEDDED_TARGET_NAME).exe; \
-    mv -f $(EMBEDDED_TARGET_NAME).exe $(PWD)/$(BIN)
-    #strip --strip-all $(EMBEDDED_TARGET_NAME).exe
+    mv -f $(EMBEDDED_TARGET_NAME).exe $(PWD)/$(BIN); \
+    strip --strip-all $(PWD)/$(BIN)/$(EMBEDDED_TARGET_NAME).exe
 
 include ../target_avian_win32_i386/makefiles/dep_copy.mk
 
