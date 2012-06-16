@@ -1,6 +1,5 @@
 PROJ = CatEyeB.Core
 
-SOURCE = src
 JARNAME = Core.jar
 
 all: classes jar 

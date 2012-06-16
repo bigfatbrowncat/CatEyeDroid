@@ -3,8 +3,6 @@ PROJ = CatEyeB.Ui
 DEP_JARS = ../CatEyeB.Core/$(JARPATH)/Core.jar \
            ../CatEyeB.Procedures/$(JARPATH)/Procedures.jar
 
-SOURCE = src
-
 JARNAME = Ui.jar
 
 all: classes jar 

@@ -2,8 +2,6 @@ PROJ = CatEyeB.Procedures
 
 DEP_JARS = ../CatEyeB.Core/$(JARPATH)/Core.jar
 
-SOURCE = src
-
 JARNAME = Procedures.jar
 
 all: classes jar 

@@ -12,8 +12,6 @@ DEP_JARS = $(ANDROID_SDK_PATH)/platforms/android-10/android.jar \
            ../CatEyeB.Procedures/$(JARPATH)/Procedures.jar \
            ../CatEyeB.Ui/$(JARPATH)/Ui.jar
 
-SOURCE = src gen
-
 JARNAME = Ui.Android.jar
 
 all: classes jar 

@@ -9,9 +9,20 @@
 CLASSPATH = out/dalvik_android_arm/classes
 JARPATH = out/dalvik_android_arm/jar
 
-JAVA_FILES := $(foreach srcpath,$(SOURCE),$(eval JAVA_SRCS += "$(srcpath) ")$(shell cd $(srcpath); find . -name \*.java | awk '{ sub(/.\//,"") }; 1'))
+SOURCE = src
+SOURCEGEN = gen
+
+JAVA_FILES := $(shell cd $(SOURCE); find . -name \*.java | awk '{ sub(/.\//,"") }; 1'))
+JAVA_GEN_FILES := $(shell \
+                      if [ -d "$(SOURCEGEN)" ]; \
+                      then \
+                          cd $(SOURCEGEN); \
+                          find . -name \*.java | awk '{ sub(/.\//,"") }; 1'; \
+                      fi; \
+                  )
 
 CLASS_FILES = $(addprefix $(CLASSPATH)/,$(addsuffix .class,$(basename $(JAVA_FILES))))
+CLASS_GEN_FILES = $(addprefix $(CLASSPATH)/,$(addsuffix .class,$(basename $(JAVA_GEN_FILES))))
 
 BUILD_CLASSPATHS = $(shell echo "$(DEP_CLASSPATHS);$(DEP_JARS)" | awk 'gsub(/ +/, ";"); 1';)
 
@@ -37,12 +48,17 @@ ENSURE_JAR = if [ ! -d "$(JARPATH)" ]; then mkdir -p "$(JARPATH)"; fi
 
 ################ Java classes #################
 
-classes: $(CLASS_FILES)
+classes: $(CLASS_FILES) $(CLASS_GEN_FILES)
 
 $(CLASSPATH)/%.class : $(SOURCE)/%.java $(DEP_JARS)
 	@echo "[$(PROJ)] Compiling java class $@"
 	$(ENSURE_CLASSES)
-	"$(JAVA_HOME)/bin/javac" -target 1.5 -g -sourcepath "$(SOURCE)" -classpath "$(BUILD_CLASSPATHS);$(CLASSPATH)" -d "$(CLASSPATH)" $<
+	"$(JAVA_HOME)/bin/javac" -target 1.5 -g -sourcepath "$(SOURCE);$(SOURCEGEN)" -classpath "$(BUILD_CLASSPATHS);$(CLASSPATH)" -d "$(CLASSPATH)" $<
+
+$(CLASSPATH)/%.class : $(SOURCEGEN)/%.java $(DEP_JARS)
+	@echo "[$(PROJ)] Compiling java class $@"
+	$(ENSURE_CLASSES)
+	"$(JAVA_HOME)/bin/javac" -target 1.5 -g -sourcepath "$(SOURCE);$(SOURCEGEN)" -classpath "$(BUILD_CLASSPATHS);$(CLASSPATH)" -d "$(CLASSPATH)" $<
 
 jar:
 	@echo "[$(PROJ)] Creating jar file $(JARPATH)/$(JARNAME)"
@@ -50,4 +66,3 @@ jar:
 	"$(JAVA_HOME)/bin/jar" cf $(JARPATH)/$(JARNAME) -C $(CLASSPATH) .
 
 .PHONY: classes classes_clean jar jar_clean
-#.SILENT:
