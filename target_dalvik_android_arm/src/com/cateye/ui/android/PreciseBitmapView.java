@@ -35,7 +35,6 @@ public class PreciseBitmapView extends View
 	
 	private final Runnable polishingDrawingRunnable = new Runnable()
 	{
-		@Override
 		public void run() 
 		{
 			if (cache[HQ].update())

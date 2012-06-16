@@ -8,7 +8,7 @@
 #    copy_dep_classpaths - copies external classes into classpath
 #    move_dlls_to_bin
 
-CLASSPATH = bin
+CLASSPATH = bin/classes
 FIND_DLLS = cd $(CLASSPATH); find . -name \*.dll | awk '{ sub(/.\//,"") }; 1'
 
 ENSURE_CLASSES = if [ ! -d "$(CLASSPATH)" ]; then mkdir -p "$(CLASSPATH)"; fi

@@ -53,12 +53,12 @@ classes: $(CLASS_FILES) $(CLASS_GEN_FILES)
 $(CLASSPATH)/%.class : $(SOURCE)/%.java $(DEP_JARS)
 	@echo "[$(PROJ)] Compiling java class $@"
 	$(ENSURE_CLASSES)
-	"$(JAVA_HOME)/bin/javac" -target 1.5 -g -sourcepath "$(SOURCE);$(SOURCEGEN)" -classpath "$(BUILD_CLASSPATHS);$(CLASSPATH)" -d "$(CLASSPATH)" $<
+	"$(JAVA_HOME)/bin/javac" -g -sourcepath "$(SOURCE);$(SOURCEGEN)" -classpath "$(BUILD_CLASSPATHS);$(CLASSPATH)" -d "$(CLASSPATH)" $<
 
 $(CLASSPATH)/%.class : $(SOURCEGEN)/%.java $(DEP_JARS)
 	@echo "[$(PROJ)] Compiling java class $@"
 	$(ENSURE_CLASSES)
-	"$(JAVA_HOME)/bin/javac" -target 1.5 -g -sourcepath "$(SOURCE);$(SOURCEGEN)" -classpath "$(BUILD_CLASSPATHS);$(CLASSPATH)" -d "$(CLASSPATH)" $<
+	"$(JAVA_HOME)/bin/javac" -g -sourcepath "$(SOURCE);$(SOURCEGEN)" -classpath "$(BUILD_CLASSPATHS);$(CLASSPATH)" -d "$(CLASSPATH)" $<
 
 jar:
 	@echo "[$(PROJ)] Creating jar file $(JARPATH)/$(JARNAME)"
