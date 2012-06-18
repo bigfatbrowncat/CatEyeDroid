@@ -328,7 +328,7 @@ arr2<float> BuildPhi(arr2<float> H, double alpha, double beta, double noise_gate
 	vector<int> ww, hh;
 	int divides = 0, wt = Hw, ht = Hh;
 	ww.push_back(wt); hh.push_back(ht);
-	while (wt > 1 && ht > 1 && divides < 5)
+	while (wt > 64 && ht > 64 && divides < 5)
 	{
 		wt /= 2; ht /= 2;
 		ww.push_back(wt); hh.push_back(ht);
@@ -418,7 +418,7 @@ arr2<float> BuildPhi(arr2<float> H, double alpha, double beta, double noise_gate
 		{
 			double abs_grad_H_cur = sqrt(grad_H_cur_x(i, j) * grad_H_cur_x(i, j) +
 			                             grad_H_cur_y(i, j) * grad_H_cur_y(i, j));
-			abs_grad_H_cur += 0.001;		// Avoiding zero
+			abs_grad_H_cur += 0.00001;		// Avoiding zero
 
 			phi_k(i, j) = (float)(pow(abs_grad_H_cur / alpha, beta - 1));
 
@@ -853,7 +853,23 @@ bool Compress(PreciseBitmap bmp, double curve, double noise_gate, double pressur
 		}
 	}
 
-	// Preparing the compressor
+	DEBUG_INFO
+
+	innerProgressListenerData multiLatticeData((Compress_progressListenerData*)reporterCallerData, reporter, 0.1, 0.9);
+	arr2<float> I = SolvePoissonNeimanMultiLattice(div_G, steps_max, epsilon, &innerProgressReporter, &multiLatticeData);
+	if (I.getWidth() == 0 && I.getHeight() == 0)
+	{
+		// This case means that we got user cancel.
+		return false;
+	}
+
+	DEBUG_INFO
+
+	double kw = H.getWidth() / I.getWidth();
+	double kh = H.getHeight() / I.getHeight();
+
+
+	// Preparing the contrast curving
 
 	double a, b;
 	if (curve > 0)
@@ -868,24 +884,6 @@ bool Compress(PreciseBitmap bmp, double curve, double noise_gate, double pressur
 	}
 	double p = pow(100, curve * 1.5);
 
-	DEBUG_INFO
-
-	// Solving Poisson equation Delta I = div G
-	//arr2<float> I(Phi.getWidth(), Phi.getHeight());
-	//SolvePoissonNeiman(I, div_G, steps_max, epsilon);
-
-	innerProgressListenerData multiLatticeData((Compress_progressListenerData*)reporterCallerData, reporter, 0.1, 0.9);
-	arr2<float> I = SolvePoissonNeimanMultiLattice(div_G, steps_max, epsilon, &innerProgressReporter, &multiLatticeData);
-	if (I.getWidth() == 0 && I.getHeight() == 0)
-	{
-		// This case means that we got user cancel.
-		return false;
-	}
-
-	DEBUG_INFO
-
-	double kw = H.getWidth() / I.getWidth();
-	double kh = H.getHeight() / I.getHeight();
 
 	// Draw it
 	for (int i = 0; i < bmp.width; i++)
@@ -978,7 +976,7 @@ extern "C" JNIEXPORT jboolean JNICALL Java_com_cateye_procedures_compressor_Comp
 	time(&start);
 
 	Compress_progressListenerData data = Compress_progressListenerData(listener, *env);
-	if (!Compress(bmp, curve, noiseGate, pressure, contrast, 0.003f, 10000, &Compress_progressReporter, &data))
+	if (!Compress(bmp, curve, noiseGate, pressure, contrast, 0.001f, 10000, &Compress_progressReporter, &data))
 	{
 		printf("User canceled the operation!\n");
 		fflush(stdout);

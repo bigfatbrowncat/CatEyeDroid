@@ -27,7 +27,7 @@ public class PreciseBitmapViewCache extends com.cateye.core.PreciseBitmapViewCac
 		if (!getPreciseBitmap().getPixelsBGRIntoIntBuffer(pixels, 
 				(int)lt.getX(), (int)lt.getY(),
 				getViewWidth() / getDownscale(), getViewHeight() / getDownscale(), 
-				1000, 
+				300, 
 				(float)(getImageTransformer().getZoom() / getDownscale()), 
 				new PreciseBitmapGetPixelsCallback() 
 				{

@@ -49,6 +49,9 @@ public class ImageActivity extends Activity
 				{
 					loadingProgressDialog.dismiss();
 					ImageActivity.this.preciseBitmapView.setPreciseBitmap(preciseBitmap);
+					
+					Log.d("ImageActivity", "starting bitmap processing");
+					startBitmapProcessing(preciseBitmap);
 				}
 			});
 		}
@@ -112,7 +115,8 @@ public class ImageActivity extends Activity
 						{
 							public void run() 
 							{
-								statusProgressBar.setVisibility(View.VISIBLE);
+								Log.e("ImageActivity", "progress: " + progress);
+								statusLayout.setVisibility(View.VISIBLE);
 								statusProgressBar.setProgress((int)(progress * 100));
 								statusTextView.setText("Processing image...");
 							}
@@ -141,9 +145,13 @@ public class ImageActivity extends Activity
 	    // Loading UI
         setContentView(R.layout.raw_viewer_activity);
         preciseBitmapView = (PreciseBitmapView)findViewById(R.id.preciseBitmapView);
+        if (preciseBitmapView == null) Log.e("ImageActivity", "preciseBitmapView is null");
         statusProgressBar = (ProgressBar)findViewById(R.id.progressBar);
+        if (statusProgressBar == null) Log.e("ImageActivity", "statusProgressBar is null");
         statusTextView = (TextView)findViewById(R.id.textView1);
+        if (statusTextView == null) Log.e("ImageActivity", "statusTextView is null");
         statusLayout = (LinearLayout)findViewById(R.id.statusLayout);
+        if (statusLayout == null) Log.e("ImageActivity", "statusLayout is null");
 
         // Determining if the activity has just been created or it has been restored
         if (savedInstanceState != null)

@@ -433,7 +433,7 @@ extern "C" JNIEXPORT jobject JNICALL Java_com_cateye_core_jni_RawImageLoader_loa
     	DEBUG_INFO
     	RawProcessor->imgdata.params.output_bps = 16;
     	//RawProcessor->imgdata.params.highlight  = 9;
-    	//RawProcessor->imgdata.params.threshold  = (float)200;
+    	RawProcessor->imgdata.params.threshold  = (float)200;
     	DEBUG_INFO
 
     	if (divide_by_2)

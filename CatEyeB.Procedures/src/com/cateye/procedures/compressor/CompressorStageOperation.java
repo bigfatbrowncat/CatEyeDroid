@@ -2,9 +2,9 @@ package com.cateye.procedures.compressor;
 
 public class CompressorStageOperation
 {
-	private double curve = 0.7;
+	private double curve = 0.75;
 	private double noiseGate = 0.1;
-	private double pressure = 0.4;
+	private double pressure = 1;
 	private double contrast = 0.85;
 	
 	public double getCurve()
